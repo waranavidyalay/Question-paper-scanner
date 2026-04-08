@@ -3,1253 +3,660 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>प्रश्नपत्रिका स्कॅनर | Question Paper Scanner</title>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/docx/8.5.0/docx.umd.min.js"></script>
+<title>प्रश्नपत्रिका स्कॅनर</title>
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Tiro+Devanagari+Marathi:ital@0;1&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,500;0,9..40,700;1,9..40,300&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Tiro+Devanagari+Marathi&family=DM+Sans:wght@300;400;500;700&display=swap');
+:root {
+  --ink:#1a1a2e; --ink2:#2d2d4e; --paper:#faf9f6; --paper2:#f3f1ec;
+  --ruled:#e8e4dc; --accent:#c0392b; --accent2:#e74c3c;
+  --green:#27ae60; --blue:#2980b9; --gold:#f39c12; --r:12px;
+  --sh:0 4px 24px rgba(26,26,46,0.10);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'DM Sans',sans-serif;background:var(--paper);color:var(--ink);min-height:100vh}
+body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
+  background-image:repeating-linear-gradient(transparent,transparent 31px,#ddd8ce 31px,#ddd8ce 32px);opacity:.3}
+.wrap{max-width:900px;margin:0 auto;padding:0 20px 60px;position:relative;z-index:1}
 
-  :root {
-    --ink: #1a1a2e;
-    --ink2: #2d2d4e;
-    --paper: #faf9f6;
-    --paper2: #f3f1ec;
-    --ruled: #e8e4dc;
-    --accent: #c0392b;
-    --accent2: #e74c3c;
-    --green: #27ae60;
-    --blue: #2980b9;
-    --gold: #f39c12;
-    --radius: 12px;
-    --shadow: 0 4px 24px rgba(26,26,46,0.10);
-  }
+/* HEADER */
+header{padding:36px 0 26px;border-bottom:3px double var(--ruled);margin-bottom:28px}
+.hrow{display:flex;align-items:flex-start;gap:16px}
+.stamp{width:58px;height:58px;background:var(--accent);border-radius:50%;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;
+  box-shadow:0 0 0 4px var(--paper),0 0 0 6px var(--accent)}
+.stamp svg{width:26px;height:26px;fill:white}
+.htxt h1{font-family:'Tiro Devanagari Marathi',serif;font-size:26px;font-weight:400;line-height:1.2}
+.htxt h1 span{color:var(--accent)}
+.htxt p{font-size:13px;color:#666;margin-top:4px;font-weight:300}
+.badge{display:inline-flex;align-items:center;gap:4px;margin-top:6px;
+  background:#e8f8ef;color:var(--green);border:1px solid #a8e6c0;
+  border-radius:20px;padding:3px 10px;font-size:11px;font-weight:600}
 
-  * { box-sizing: border-box; margin: 0; padding: 0; }
+/* API SETUP */
+.api-box{background:#fffdf0;border:1.5px solid #ffd180;border-radius:var(--r);
+  padding:16px 20px;margin-bottom:22px;display:flex;gap:12px;align-items:flex-start}
+.api-icon{font-size:24px;flex-shrink:0;margin-top:2px}
+.api-body{flex:1}
+.api-body h3{font-size:14px;font-weight:600;color:#b36b00;margin-bottom:4px}
+.api-body p{font-size:12px;color:#7a5200;line-height:1.6}
+.api-body a{color:var(--accent);font-weight:600;text-decoration:none}
+.api-row{display:flex;gap:8px;margin-top:8px}
+.api-row input{flex:1;padding:8px 12px;border:1.5px solid #ffd180;border-radius:7px;
+  font-size:13px;font-family:monospace;color:var(--ink);background:white;outline:none}
+.api-row input:focus{border-color:var(--gold)}
+.btn-save{padding:8px 15px;background:var(--gold);color:white;border:none;
+  border-radius:7px;font-size:13px;font-weight:700;cursor:pointer}
+.btn-save:hover{background:#e67e22}
+.key-ok{display:none;font-size:12px;color:var(--green);font-weight:600;margin-top:4px}
 
-  body {
-    font-family: 'DM Sans', sans-serif;
-    background: var(--paper);
-    color: var(--ink);
-    min-height: 100vh;
-  }
+/* CARDS */
+.card{background:white;border:1px solid var(--ruled);border-radius:var(--r);
+  padding:20px;margin-bottom:20px;box-shadow:var(--sh)}
+.card-ttl{font-size:12px;font-weight:700;color:var(--accent);text-transform:uppercase;
+  letter-spacing:.08em;margin-bottom:12px;display:flex;align-items:center;gap:8px}
+.card-ttl::after{content:'';flex:1;height:1px;background:var(--ruled)}
 
-  /* Ruled paper background */
-  body::before {
-    content: '';
-    position: fixed;
-    inset: 0;
-    background-image:
-      repeating-linear-gradient(
-        transparent,
-        transparent 31px,
-        #ddd8ce 31px,
-        #ddd8ce 32px
-      );
-    opacity: 0.35;
-    pointer-events: none;
-    z-index: 0;
-  }
+/* UPLOAD ZONE */
+.zone{border:2.5px dashed var(--ruled);border-radius:var(--r);padding:40px 20px;
+  text-align:center;cursor:pointer;transition:all .2s;background:var(--paper);position:relative}
+.zone:hover,.zone.on{border-color:var(--accent);background:#fff8f8}
+.zone input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
+.zone .zi{font-size:42px;margin-bottom:8px}
+.zone h3{font-size:15px;font-weight:600;color:var(--ink2);margin-bottom:4px;font-family:'Tiro Devanagari Marathi',serif}
+.zone p{font-size:13px;color:#888}
+.fmts{margin-top:9px;display:flex;justify-content:center;gap:5px;flex-wrap:wrap}
+.fmt{background:var(--paper2);border:1px solid var(--ruled);border-radius:4px;padding:2px 8px;font-size:11px;color:#666;font-weight:600}
 
-  .container {
-    max-width: 900px;
-    margin: 0 auto;
-    padding: 0 20px 60px;
-    position: relative;
-    z-index: 1;
-  }
+/* PAGES */
+.pg-area{display:none}
+.pg-bar{display:flex;align-items:center;justify-content:space-between;padding:9px 0 4px}
+.pg-bar span{font-size:13px;color:#666}
+.pg-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(115px,1fr));gap:9px;margin-top:4px}
+.pg{position:relative;border-radius:8px;overflow:hidden;border:2px solid var(--ruled);
+  background:#f5f5f5;transition:border-color .2s,transform .2s;cursor:grab;aspect-ratio:3/4}
+.pg:hover{border-color:var(--blue);transform:translateY(-2px)}
+.pg img{width:100%;height:100%;object-fit:cover;display:block;pointer-events:none}
+.pg .lbl{position:absolute;bottom:0;left:0;right:0;background:rgba(26,26,46,.78);
+  color:white;font-size:11px;text-align:center;padding:3px;font-weight:600}
+.pg .pst{position:absolute;top:4px;left:4px;font-size:13px;line-height:1;
+  text-shadow:0 1px 3px rgba(0,0,0,.5)}
+.pg .rm{position:absolute;top:4px;right:4px;width:20px;height:20px;background:var(--accent);
+  color:white;border:none;border-radius:50%;font-size:11px;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;font-weight:700;
+  opacity:0;transition:opacity .2s}
+.pg:hover .rm{opacity:1}
+.pg.drag{opacity:.4;transform:scale(.95)}
+.pg.drop{border-color:var(--blue);background:#e8f4fd}
 
-  /* HEADER */
-  header {
-    padding: 40px 0 32px;
-    border-bottom: 3px double var(--ruled);
-    margin-bottom: 36px;
-  }
-  .header-inner {
-    display: flex;
-    align-items: flex-start;
-    gap: 20px;
-  }
-  .logo-stamp {
-    width: 64px;
-    height: 64px;
-    background: var(--accent);
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
-    box-shadow: 0 0 0 4px #faf9f6, 0 0 0 6px var(--accent);
-  }
-  .logo-stamp svg { width: 32px; height: 32px; fill: white; }
-  .header-text h1 {
-    font-family: 'Tiro Devanagari Marathi', serif;
-    font-size: 28px;
-    font-weight: 400;
-    color: var(--ink);
-    line-height: 1.2;
-  }
-  .header-text h1 span { color: var(--accent); }
-  .header-text p {
-    font-size: 13px;
-    color: #666;
-    margin-top: 6px;
-    font-weight: 300;
-  }
-  .free-badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-    background: #e8f8ef;
-    color: var(--green);
-    border: 1px solid #a8e6c0;
-    border-radius: 20px;
-    padding: 3px 10px;
-    font-size: 11px;
-    font-weight: 500;
-    margin-top: 8px;
-  }
+/* PROCESS BTN */
+.proc-btn{width:100%;padding:16px;background:var(--accent);color:white;border:none;
+  border-radius:var(--r);font-size:16px;font-weight:700;font-family:'Tiro Devanagari Marathi',serif;
+  cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:10px;
+  margin:18px 0;box-shadow:0 6px 20px rgba(192,57,43,.3)}
+.proc-btn:hover:not(:disabled){background:var(--accent2);transform:translateY(-1px);box-shadow:0 8px 28px rgba(192,57,43,.4)}
+.proc-btn:disabled{background:#ccc;cursor:not-allowed;box-shadow:none;transform:none}
 
-  /* API KEY SETUP */
-  .api-setup {
-    background: linear-gradient(135deg, #fff9f0 0%, #fff3e0 100%);
-    border: 1.5px solid #ffd180;
-    border-radius: var(--radius);
-    padding: 20px 24px;
-    margin-bottom: 28px;
-    display: flex;
-    align-items: center;
-    gap: 16px;
-  }
-  .api-setup .icon { font-size: 28px; flex-shrink: 0; }
-  .api-setup-text { flex: 1; }
-  .api-setup-text h3 { font-size: 14px; font-weight: 600; color: #b36b00; margin-bottom: 6px; }
-  .api-setup-text p { font-size: 12px; color: #7a5200; line-height: 1.5; }
-  .api-setup-text a { color: var(--accent); text-decoration: none; font-weight: 500; }
-  .api-key-row { display: flex; gap: 8px; margin-top: 10px; }
-  .api-key-row input {
-    flex: 1;
-    padding: 9px 14px;
-    border: 1.5px solid #ffd180;
-    border-radius: 8px;
-    background: white;
-    font-size: 13px;
-    font-family: monospace;
-    color: var(--ink);
-    outline: none;
-  }
-  .api-key-row input:focus { border-color: var(--gold); }
-  .btn-save-key {
-    padding: 9px 18px;
-    background: var(--gold);
-    color: white;
-    border: none;
-    border-radius: 8px;
-    font-size: 13px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: background 0.2s;
-  }
-  .btn-save-key:hover { background: #e67e22; }
-  .key-saved { color: var(--green); font-size: 12px; font-weight: 600; margin-top: 6px; display: none; }
+/* PROGRESS */
+.prog{display:none;margin:14px 0}
+.prog.on{display:block}
+.prog-track{background:var(--paper2);border-radius:100px;height:8px;overflow:hidden;margin:8px 0}
+.prog-fill{height:100%;background:linear-gradient(90deg,var(--accent),var(--gold));border-radius:100px;width:0%;transition:width .35s ease}
+.prog-txt{font-size:13px;color:#666;text-align:center;margin-top:5px}
+.steps{display:flex;gap:5px;margin-top:11px;flex-wrap:wrap}
+.pill{padding:3px 9px;border-radius:20px;font-size:11px;font-weight:600;
+  background:var(--paper2);border:1px solid var(--ruled);color:#888;transition:all .25s}
+.pill.act{background:#fff3e0;border-color:var(--gold);color:#b36b00}
+.pill.ok{background:#e8f8ef;border-color:#a8e6c0;color:var(--green)}
+.pill.err{background:#fef2f2;border-color:#fca5a5;color:#dc2626}
 
-  /* PAPER DETAILS */
-  .section-card {
-    background: white;
-    border: 1px solid var(--ruled);
-    border-radius: var(--radius);
-    padding: 24px;
-    margin-bottom: 24px;
-    box-shadow: var(--shadow);
-  }
-  .section-title {
-    font-size: 13px;
-    font-weight: 700;
-    color: var(--accent);
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-    margin-bottom: 16px;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
-  .section-title::after {
-    content: '';
-    flex: 1;
-    height: 1px;
-    background: var(--ruled);
-  }
+/* META PANEL */
+.meta-panel{display:none;background:#f0f8ff;border:1.5px solid #93c5fd;border-radius:10px;padding:16px 18px;margin-bottom:18px}
+.meta-panel.on{display:block}
+.meta-panel h4{font-size:12px;font-weight:700;color:var(--blue);margin-bottom:10px;text-transform:uppercase;letter-spacing:.06em}
+.meta-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(155px,1fr));gap:8px}
+.mf label{display:block;font-size:10px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.06em;margin-bottom:3px}
+.mf input{width:100%;padding:7px 10px;border:1.5px solid #bfdbfe;border-radius:6px;
+  font-size:13px;font-family:'DM Sans',sans-serif;color:var(--ink);background:white;outline:none}
+.mf input:focus{border-color:var(--blue)}
+.meta-note{font-size:11px;color:#64748b;margin-top:7px}
 
-  .form-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 14px;
-  }
-  .form-grid.three { grid-template-columns: 1fr 1fr 1fr; }
-  @media (max-width: 600px) {
-    .form-grid, .form-grid.three { grid-template-columns: 1fr; }
-  }
+/* RESULT */
+.result{display:none}
+.result.on{display:block}
+.rtop{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:9px}
+.rtop h2{font-family:'Tiro Devanagari Marathi',serif;font-size:19px;font-weight:400}
+.ract{display:flex;gap:7px;flex-wrap:wrap}
 
-  .field label {
-    display: block;
-    font-size: 12px;
-    font-weight: 600;
-    color: #888;
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
-    margin-bottom: 6px;
-  }
-  .field input, .field select {
-    width: 100%;
-    padding: 10px 14px;
-    border: 1.5px solid var(--ruled);
-    border-radius: 8px;
-    font-size: 14px;
-    font-family: 'DM Sans', sans-serif;
-    color: var(--ink);
-    background: var(--paper);
-    outline: none;
-    transition: border-color 0.2s, background 0.2s;
-  }
-  .field input:focus, .field select:focus {
-    border-color: var(--accent);
-    background: white;
-  }
+.btn{padding:9px 17px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;
+  border:1.5px solid transparent;transition:all .2s;display:inline-flex;align-items:center;gap:5px;font-family:'DM Sans',sans-serif}
+.b-green{background:var(--green);color:white;border-color:var(--green);box-shadow:0 4px 12px rgba(39,174,96,.25)}
+.b-green:hover:not(:disabled){background:#219a52}
+.b-green:disabled{background:#9dd3af;cursor:not-allowed;box-shadow:none}
+.b-blue{background:var(--blue);color:white;border-color:var(--blue);box-shadow:0 4px 12px rgba(41,128,185,.2)}
+.b-blue:hover{background:#2471a3}
+.b-out{background:white;color:var(--ink);border-color:var(--ruled)}
+.b-out:hover{border-color:var(--accent);color:var(--accent)}
+.b-sm{padding:5px 11px;font-size:12px}
 
-  /* UPLOAD ZONE */
-  .upload-zone {
-    border: 2.5px dashed var(--ruled);
-    border-radius: var(--radius);
-    padding: 48px 24px;
-    text-align: center;
-    cursor: pointer;
-    transition: all 0.25s;
-    background: var(--paper);
-    position: relative;
-  }
-  .upload-zone:hover, .upload-zone.drag-over {
-    border-color: var(--accent);
-    background: #fff8f8;
-  }
-  .upload-zone input[type="file"] {
-    position: absolute;
-    inset: 0;
-    opacity: 0;
-    cursor: pointer;
-    width: 100%;
-    height: 100%;
-  }
-  .upload-icon { font-size: 48px; margin-bottom: 12px; }
-  .upload-zone h3 {
-    font-size: 16px;
-    font-weight: 600;
-    color: var(--ink2);
-    margin-bottom: 6px;
-    font-family: 'Tiro Devanagari Marathi', serif;
-  }
-  .upload-zone p { font-size: 13px; color: #888; }
-  .upload-zone .formats {
-    margin-top: 10px;
-    display: flex;
-    justify-content: center;
-    gap: 6px;
-  }
-  .fmt-badge {
-    background: var(--paper2);
-    border: 1px solid var(--ruled);
-    border-radius: 4px;
-    padding: 2px 8px;
-    font-size: 11px;
-    color: #666;
-    font-weight: 600;
-  }
+.preview{background:white;border:1px solid var(--ruled);border-radius:var(--r);padding:20px;
+  max-height:520px;overflow-y:auto;font-family:'Tiro Devanagari Marathi',serif;font-size:15px;
+  line-height:2;color:var(--ink);white-space:pre-wrap;box-shadow:inset 0 2px 8px rgba(0,0,0,.04)}
+.preview:focus{outline:2px solid var(--accent)}
+.preview::-webkit-scrollbar{width:5px}
+.preview::-webkit-scrollbar-thumb{background:var(--ruled);border-radius:3px}
 
-  /* PAGES PREVIEW */
-  .pages-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
-    gap: 12px;
-    margin-top: 16px;
-  }
-  .page-thumb {
-    position: relative;
-    border-radius: 8px;
-    overflow: hidden;
-    border: 2px solid var(--ruled);
-    background: #f9f9f9;
-    transition: border-color 0.2s, transform 0.2s;
-    cursor: pointer;
-    aspect-ratio: 3/4;
-  }
-  .page-thumb:hover { border-color: var(--blue); transform: translateY(-2px); }
-  .page-thumb img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    display: block;
-  }
-  .page-thumb .pg-num {
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    background: rgba(26,26,46,0.75);
-    color: white;
-    font-size: 11px;
-    text-align: center;
-    padding: 4px;
-    font-weight: 600;
-  }
-  .page-thumb .remove-btn {
-    position: absolute;
-    top: 4px;
-    right: 4px;
-    width: 22px;
-    height: 22px;
-    background: var(--accent);
-    color: white;
-    border: none;
-    border-radius: 50%;
-    font-size: 12px;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-weight: 700;
-    line-height: 1;
-    opacity: 0;
-    transition: opacity 0.2s;
-  }
-  .page-thumb:hover .remove-btn { opacity: 1; }
-  .page-count-bar {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 10px 0 4px;
-  }
-  .page-count-bar span { font-size: 13px; color: #666; }
-  .page-count-bar strong { color: var(--ink); }
+/* ALERTS */
+.alert{padding:11px 15px;border-radius:8px;font-size:13px;margin:9px 0}
+.al-err{background:#fef2f2;border:1px solid #fca5a5;color:#dc2626}
+.al-ok{background:#f0fdf4;border:1px solid #86efac;color:#16a34a}
+.al-info{background:#eff6ff;border:1px solid #93c5fd;color:#1d4ed8}
 
-  /* PROCESS BUTTON */
-  .process-btn {
-    width: 100%;
-    padding: 18px;
-    background: var(--accent);
-    color: white;
-    border: none;
-    border-radius: var(--radius);
-    font-size: 17px;
-    font-weight: 700;
-    font-family: 'Tiro Devanagari Marathi', serif;
-    cursor: pointer;
-    transition: all 0.2s;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 10px;
-    letter-spacing: 0.02em;
-    margin: 24px 0;
-    box-shadow: 0 6px 20px rgba(192,57,43,0.3);
-  }
-  .process-btn:hover:not(:disabled) {
-    background: var(--accent2);
-    transform: translateY(-1px);
-    box-shadow: 0 8px 28px rgba(192,57,43,0.4);
-  }
-  .process-btn:disabled {
-    background: #ccc;
-    cursor: not-allowed;
-    box-shadow: none;
-    transform: none;
-  }
+@keyframes spin{to{transform:rotate(360deg)}}
+.spin{width:18px;height:18px;border:2.5px solid rgba(255,255,255,.3);border-top-color:white;
+  border-radius:50%;animation:spin .7s linear infinite;flex-shrink:0}
 
-  /* PROGRESS */
-  .progress-section {
-    display: none;
-    margin: 20px 0;
-  }
-  .progress-section.active { display: block; }
-  .progress-track {
-    background: var(--paper2);
-    border-radius: 100px;
-    height: 8px;
-    overflow: hidden;
-    margin: 10px 0;
-  }
-  .progress-fill {
-    height: 100%;
-    background: linear-gradient(90deg, var(--accent), var(--gold));
-    border-radius: 100px;
-    width: 0%;
-    transition: width 0.4s ease;
-  }
-  .progress-status { font-size: 13px; color: #666; text-align: center; margin-top: 8px; }
-  .progress-steps {
-    display: flex;
-    gap: 6px;
-    margin-top: 14px;
-    flex-wrap: wrap;
-  }
-  .step-pill {
-    padding: 4px 10px;
-    border-radius: 20px;
-    font-size: 11px;
-    font-weight: 600;
-    background: var(--paper2);
-    border: 1px solid var(--ruled);
-    color: #888;
-    transition: all 0.3s;
-  }
-  .step-pill.active { background: #fff3e0; border-color: var(--gold); color: #b36b00; }
-  .step-pill.done { background: #e8f8ef; border-color: #a8e6c0; color: var(--green); }
-
-  /* RESULT PREVIEW */
-  .result-section {
-    display: none;
-  }
-  .result-section.active { display: block; }
-  .result-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 16px;
-    flex-wrap: gap;
-    gap: 10px;
-  }
-  .result-header h2 {
-    font-family: 'Tiro Devanagari Marathi', serif;
-    font-size: 20px;
-    font-weight: 400;
-  }
-  .result-actions { display: flex; gap: 8px; flex-wrap: wrap; }
-
-  .btn {
-    padding: 10px 20px;
-    border-radius: 8px;
-    font-size: 13px;
-    font-weight: 600;
-    cursor: pointer;
-    border: 1.5px solid transparent;
-    transition: all 0.2s;
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    font-family: 'DM Sans', sans-serif;
-  }
-  .btn-primary {
-    background: var(--green);
-    color: white;
-    border-color: var(--green);
-    box-shadow: 0 4px 14px rgba(39,174,96,0.3);
-  }
-  .btn-primary:hover { background: #219a52; }
-  .btn-secondary {
-    background: var(--blue);
-    color: white;
-    border-color: var(--blue);
-    box-shadow: 0 4px 14px rgba(41,128,185,0.25);
-  }
-  .btn-secondary:hover { background: #2471a3; }
-  .btn-outline {
-    background: white;
-    color: var(--ink);
-    border-color: var(--ruled);
-  }
-  .btn-outline:hover { border-color: var(--accent); color: var(--accent); }
-
-  .text-preview {
-    background: white;
-    border: 1px solid var(--ruled);
-    border-radius: var(--radius);
-    padding: 24px;
-    max-height: 500px;
-    overflow-y: auto;
-    font-family: 'Tiro Devanagari Marathi', serif;
-    font-size: 15px;
-    line-height: 2;
-    color: var(--ink);
-    white-space: pre-wrap;
-    box-shadow: inset 0 2px 8px rgba(0,0,0,0.04);
-  }
-  .text-preview:focus { outline: 2px solid var(--accent); }
-
-  /* Page separator in preview */
-  .page-sep {
-    margin: 16px 0;
-    border: none;
-    border-top: 2px dashed var(--ruled);
-    position: relative;
-  }
-
-  /* Alerts */
-  .alert {
-    padding: 14px 18px;
-    border-radius: 8px;
-    font-size: 13px;
-    margin: 12px 0;
-    display: flex;
-    align-items: flex-start;
-    gap: 10px;
-  }
-  .alert-error { background: #fef2f2; border: 1px solid #fca5a5; color: #dc2626; }
-  .alert-success { background: #f0fdf4; border: 1px solid #86efac; color: #16a34a; }
-  .alert-info { background: #eff6ff; border: 1px solid #93c5fd; color: #1d4ed8; }
-
-  /* FOOTER */
-  footer {
-    text-align: center;
-    padding: 32px 0 16px;
-    font-size: 12px;
-    color: #aaa;
-    border-top: 1px solid var(--ruled);
-    margin-top: 48px;
-  }
-
-  /* Spinner */
-  @keyframes spin { to { transform: rotate(360deg); } }
-  .spinner {
-    width: 20px; height: 20px;
-    border: 2.5px solid rgba(255,255,255,0.3);
-    border-top-color: white;
-    border-radius: 50%;
-    animation: spin 0.7s linear infinite;
-    flex-shrink: 0;
-  }
-
-  /* Page drag reorder */
-  .page-thumb.dragging { opacity: 0.4; transform: scale(0.95); }
-  .page-thumb.drag-target { border-color: var(--blue); background: #e8f4fd; }
-
-  /* Scrollbar styling */
-  .text-preview::-webkit-scrollbar { width: 6px; }
-  .text-preview::-webkit-scrollbar-track { background: var(--paper2); }
-  .text-preview::-webkit-scrollbar-thumb { background: var(--ruled); border-radius: 3px; }
-
-  /* Responsive tweaks */
-  @media (max-width: 600px) {
-    header { padding: 24px 0 20px; }
-    .header-text h1 { font-size: 22px; }
-    .process-btn { font-size: 15px; padding: 15px; }
-  }
+footer{text-align:center;padding:26px 0 12px;font-size:12px;color:#aaa;border-top:1px solid var(--ruled);margin-top:40px}
+@media(max-width:600px){.htxt h1{font-size:22px}.proc-btn{font-size:14px;padding:13px}.meta-grid{grid-template-columns:1fr 1fr}}
 </style>
 </head>
 <body>
-<div class="container">
+<div class="wrap">
 
-  <!-- HEADER -->
-  <header>
-    <div class="header-inner">
-      <div class="logo-stamp">
-        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-          <polyline points="14 2 14 8 20 8" style="fill:none;stroke:rgba(255,255,255,0.7);stroke-width:1.5;stroke-linecap:round"/>
-          <line x1="16" y1="13" x2="8" y2="13" style="fill:none;stroke:rgba(255,255,255,0.7);stroke-width:1.5;stroke-linecap:round"/>
-          <line x1="16" y1="17" x2="8" y2="17" style="fill:none;stroke:rgba(255,255,255,0.7);stroke-width:1.5;stroke-linecap:round"/>
-          <polyline points="10 9 9 9 8 9" style="fill:none;stroke:rgba(255,255,255,0.7);stroke-width:1.5;stroke-linecap:round"/>
-        </svg>
-      </div>
-      <div class="header-text">
-        <h1>प्रश्नपत्रिका <span>स्कॅनर</span></h1>
-        <p>Handwritten Question Paper → Word Document | Google Gemini AI</p>
-        <div class="free-badge">✓ पूर्णपणे मोफत • शाळेसाठी</div>
-      </div>
+<!-- HEADER -->
+<header>
+  <div class="hrow">
+    <div class="stamp">
+      <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8" style="fill:none;stroke:rgba(255,255,255,0.7);stroke-width:1.5;stroke-linecap:round"/><line x1="16" y1="13" x2="8" y2="13" style="fill:none;stroke:rgba(255,255,255,0.7);stroke-width:1.5;stroke-linecap:round"/><line x1="16" y1="17" x2="8" y2="17" style="fill:none;stroke:rgba(255,255,255,0.7);stroke-width:1.5;stroke-linecap:round"/></svg>
     </div>
-  </header>
-
-  <!-- API KEY SETUP -->
-  <div class="api-setup" id="apiSetupBox">
-    <div class="icon">🔑</div>
-    <div class="api-setup-text">
-      <h3>Google Gemini API Key सेट करा</h3>
-      <p>
-        एकदाच करायचे आहे! मोफत key मिळवा:
-        <a href="https://aistudio.google.com/app/apikey" target="_blank">aistudio.google.com/app/apikey</a>
-        → "Get API Key" → Copy करा → खाली paste करा.
-      </p>
-      <div class="api-key-row">
-        <input type="password" id="apiKeyInput" placeholder="AIza..." autocomplete="off" />
-        <button class="btn-save-key" onclick="saveApiKey()">Save करा</button>
-      </div>
-      <div class="key-saved" id="keySavedMsg">✓ API Key सेव्ह झाली! Browser मध्ये साठवली आहे.</div>
+    <div class="htxt">
+      <h1>प्रश्नपत्रिका <span>स्कॅनर</span></h1>
+      <p>हस्तलिखित प्रश्नपत्रिका → Word Document | Google Gemini AI</p>
+      <div class="badge">✓ मोफत • माहिती AI आपोआप ओळखतो • शाळेसाठी</div>
     </div>
   </div>
+</header>
 
-  <!-- PAPER DETAILS -->
-  <div class="section-card">
-    <div class="section-title">📋 प्रश्नपत्रिका माहिती</div>
-    <div class="form-grid three">
-      <div class="field">
-        <label>शाळेचे नाव</label>
-        <input type="text" id="schoolName" placeholder="उदा. जि. प. शाळा, कोल्हापूर" />
-      </div>
-      <div class="field">
-        <label>विषय (Subject)</label>
-        <select id="subject">
-          <option value="">-- विषय निवडा --</option>
-          <optgroup label="भाषा">
-            <option value="मराठी">मराठी</option>
-            <option value="English">English (इंग्रजी)</option>
-            <option value="हिंदी">हिंदी</option>
-            <option value="संस्कृत">संस्कृत</option>
-            <option value="उर्दू">उर्दू</option>
-          </optgroup>
-          <optgroup label="गणित व विज्ञान">
-            <option value="गणित">गणित (Mathematics)</option>
-            <option value="विज्ञान">विज्ञान (Science)</option>
-            <option value="भौतिकशास्त्र">भौतिकशास्त्र (Physics)</option>
-            <option value="रसायनशास्त्र">रसायनशास्त्र (Chemistry)</option>
-            <option value="जीवशास्त्र">जीवशास्त्र (Biology)</option>
-          </optgroup>
-          <optgroup label="सामाजिक शास्त्र">
-            <option value="इतिहास">इतिहास (History)</option>
-            <option value="भूगोल">भूगोल (Geography)</option>
-            <option value="नागरिकशास्त्र">नागरिकशास्त्र (Civics)</option>
-            <option value="अर्थशास्त्र">अर्थशास्त्र (Economics)</option>
-          </optgroup>
-          <optgroup label="इतर">
-            <option value="माहिती तंत्रज्ञान">माहिती तंत्रज्ञान (IT)</option>
-            <option value="व्यवसाय अभ्यास">व्यवसाय अभ्यास</option>
-            <option value="कला">कला (Art)</option>
-            <option value="इतर">इतर (Other)</option>
-          </optgroup>
-        </select>
-      </div>
-      <div class="field">
-        <label>इयत्ता (Class)</label>
-        <select id="classGrade">
-          <option value="">-- इयत्ता --</option>
-          <option>इयत्ता १ ली</option><option>इयत्ता २ री</option>
-          <option>इयत्ता ३ री</option><option>इयत्ता ४ थी</option>
-          <option>इयत्ता ५ वी</option><option>इयत्ता ६ वी</option>
-          <option>इयत्ता ७ वी</option><option>इयत्ता ८ वी</option>
-          <option>इयत्ता ९ वी</option><option>इयत्ता १० वी</option>
-          <option>इयत्ता ११ वी</option><option>इयत्ता १२ वी</option>
-        </select>
-      </div>
+<!-- API KEY -->
+<div class="api-box">
+  <div class="api-icon">🔑</div>
+  <div class="api-body">
+    <h3>Google Gemini API Key (फक्त एकदाच सेट करायची)</h3>
+    <p>मोफत key मिळवा → <a href="https://aistudio.google.com/app/apikey" target="_blank">aistudio.google.com/app/apikey</a> → "Create API Key" → Copy → इथे paste करा</p>
+    <div class="api-row">
+      <input type="password" id="apiKeyInput" placeholder="AIzaSy..." autocomplete="off">
+      <button class="btn-save" onclick="saveKey()">Save करा</button>
     </div>
-    <div class="form-grid" style="margin-top:14px">
-      <div class="field">
-        <label>परीक्षेचा प्रकार</label>
-        <select id="examType">
-          <option value="">-- परीक्षा प्रकार --</option>
-          <option>प्रथम सत्र परीक्षा (SA-1)</option>
-          <option>द्वितीय सत्र परीक्षा (SA-2)</option>
-          <option>घटक चाचणी (Unit Test)</option>
-          <option>सराव परीक्षा (Practice)</option>
-          <option>वार्षिक परीक्षा (Annual)</option>
-          <option>अर्धवार्षिक परीक्षा</option>
-        </select>
-      </div>
-      <div class="field">
-        <label>परीक्षा तारीख</label>
-        <input type="date" id="examDate" />
-      </div>
-      <div class="field">
-        <label>एकूण गुण (Total Marks)</label>
-        <input type="number" id="totalMarks" placeholder="उदा. 100" min="1" max="999" />
-      </div>
-      <div class="field">
-        <label>वेळ (Time)</label>
-        <input type="text" id="duration" placeholder="उदा. 3 तास" />
-      </div>
-    </div>
+    <div class="key-ok" id="keyOk">✓ API Key सेव्ह आहे!</div>
   </div>
-
-  <!-- UPLOAD SECTION -->
-  <div class="section-card">
-    <div class="section-title">📷 Pages Upload करा (जास्तीत जास्त 30)</div>
-
-    <div class="upload-zone" id="uploadZone">
-      <input type="file" id="fileInput" accept="image/*,.pdf" multiple />
-      <div class="upload-icon">📄</div>
-      <h3>फोटो इथे टाका किंवा क्लिक करा</h3>
-      <p>हस्तलिखित प्रश्नपत्रिकेचे फोटो — सर्व pages एकत्र निवडा</p>
-      <div class="formats">
-        <span class="fmt-badge">JPG</span>
-        <span class="fmt-badge">PNG</span>
-        <span class="fmt-badge">WEBP</span>
-        <span class="fmt-badge">HEIC</span>
-      </div>
-    </div>
-
-    <div id="pagesArea" style="display:none">
-      <div class="page-count-bar">
-        <span>एकूण <strong id="pageCountDisplay">0</strong> pages</span>
-        <button class="btn btn-outline" onclick="clearAllPages()" style="font-size:12px;padding:6px 12px">
-          🗑 सर्व काढा
-        </button>
-      </div>
-      <div class="pages-grid" id="pagesGrid"></div>
-    </div>
-    <div id="alertBox"></div>
-  </div>
-
-  <!-- PROCESS BUTTON -->
-  <button class="process-btn" id="processBtn" onclick="startProcessing()" disabled>
-    <span id="processBtnText">📄 pages upload करा</span>
-  </button>
-
-  <!-- PROGRESS -->
-  <div class="progress-section" id="progressSection">
-    <div class="progress-track">
-      <div class="progress-fill" id="progressFill"></div>
-    </div>
-    <div class="progress-status" id="progressStatus">सुरुवात होत आहे...</div>
-    <div class="progress-steps" id="progressSteps"></div>
-  </div>
-
-  <!-- RESULT SECTION -->
-  <div class="result-section" id="resultSection">
-    <div class="section-card">
-      <div class="result-header">
-        <h2>✅ मजकूर तयार आहे</h2>
-        <div class="result-actions">
-          <button class="btn btn-primary" onclick="downloadDocx()">
-            ⬇ Word (.docx) डाउनलोड
-          </button>
-          <button class="btn btn-secondary" onclick="copyToClipboard()">
-            📋 Copy करा
-          </button>
-          <button class="btn btn-outline" onclick="resetAll()">
-            🔄 नवीन paper
-          </button>
-        </div>
-      </div>
-      <p style="font-size:12px;color:#888;margin-bottom:12px">
-        ✏️ खालील text edit करता येतो — चुका असल्यास दुरुस्त करा, मग download करा
-      </p>
-      <div class="text-preview" id="textPreview" contenteditable="true"></div>
-    </div>
-  </div>
-
 </div>
 
-<footer>
-  प्रश्नपत्रिका स्कॅनर • Google Gemini AI • शाळेसाठी मोफत<br>
-  API key तुमच्या browser मध्येच साठवली जाते — कुठेही पाठवली जात नाही
-</footer>
+<!-- UPLOAD -->
+<div class="card">
+  <div class="card-ttl">📷 प्रश्नपत्रिकेचे फोटो Upload करा</div>
+  <div class="alert al-info" style="margin-bottom:12px;font-size:12px">
+    💡 <strong>फॉर्म भरायची गरज नाही!</strong> AI आपोआप ओळखेल: शाळेचे नाव · विषय · इयत्ता · परीक्षा प्रकार · तारीख · गुण · वेळ — paper वरूनच.
+  </div>
+  <div class="zone" id="zone">
+    <input type="file" id="fi" accept="image/jpeg,image/jpg,image/png,image/webp,image/heic,image/heif" multiple>
+    <div class="zi">📄</div>
+    <h3>फोटो इथे टाका किंवा क्लिक करा</h3>
+    <p>सर्व pages एकत्र निवडा — drag करून क्रम बदलता येतो</p>
+    <div class="fmts"><span class="fmt">JPG</span><span class="fmt">PNG</span><span class="fmt">WEBP</span><span class="fmt">HEIC</span></div>
+  </div>
+  <div class="pg-area" id="pgArea">
+    <div class="pg-bar">
+      <span>एकूण <strong id="pgCount">0</strong> pages</span>
+      <button class="btn b-out b-sm" onclick="clearAll()">🗑 सर्व काढा</button>
+    </div>
+    <div class="pg-grid" id="pgGrid"></div>
+  </div>
+  <div id="alertBox"></div>
+</div>
+
+<!-- PROCESS BTN -->
+<button class="proc-btn" id="procBtn" onclick="go()" disabled>
+  <span id="procTxt">📄 pages upload करा</span>
+</button>
+
+<!-- PROGRESS -->
+<div class="prog" id="prog">
+  <div class="prog-track"><div class="prog-fill" id="pf"></div></div>
+  <div class="prog-txt" id="pt">सुरुवात...</div>
+  <div class="steps" id="steps"></div>
+</div>
+
+<!-- META PANEL -->
+<div class="meta-panel" id="metaPanel">
+  <h4>🤖 AI ने ओळखलेली माहिती — तपासा, गरज असल्यास edit करा</h4>
+  <div class="meta-grid">
+    <div class="mf"><label>शाळेचे नाव</label><input id="m_school" placeholder="—"></div>
+    <div class="mf"><label>विषय</label><input id="m_subj" placeholder="—"></div>
+    <div class="mf"><label>इयत्ता</label><input id="m_cls" placeholder="—"></div>
+    <div class="mf"><label>परीक्षा प्रकार</label><input id="m_exam" placeholder="—"></div>
+    <div class="mf"><label>तारीख</label><input id="m_date" placeholder="—"></div>
+    <div class="mf"><label>एकूण गुण</label><input id="m_marks" placeholder="—"></div>
+    <div class="mf"><label>वेळ</label><input id="m_time" placeholder="—"></div>
+  </div>
+  <p class="meta-note">⚡ हे fields Word file च्या header मध्ये जातात. AI चुकला असल्यास edit करा.</p>
+</div>
+
+<!-- RESULT -->
+<div class="result" id="result">
+  <div class="card">
+    <div class="rtop">
+      <h2>✅ मजकूर तयार आहे</h2>
+      <div class="ract">
+        <button class="btn b-green" onclick="dlDocx()" id="dlBtn">⬇ Word (.docx) डाउनलोड</button>
+        <button class="btn b-blue" onclick="copyTxt()">📋 Copy</button>
+        <button class="btn b-out" onclick="resetAll()">🔄 नवीन paper</button>
+      </div>
+    </div>
+    <p style="font-size:12px;color:#888;margin-bottom:10px">✏️ खालील text edit करता येतो — चुका दुरुस्त करा, मग download करा</p>
+    <div class="preview" id="preview" contenteditable="true" spellcheck="false"></div>
+  </div>
+</div>
+
+</div>
+<footer>प्रश्नपत्रिका स्कॅनर • Google Gemini AI • शाळेसाठी मोफत<br>API key फक्त तुमच्या browser मध्येच साठवली जाते — कुठेही पाठवली जात नाही</footer>
 
 <script>
-// ─── STATE ───────────────────────────────────────────────
-let pages = [];          // [{file, dataUrl, name}]
-let extractedTexts = []; // per-page OCR results
-let apiKey = '';
-
-// ─── INIT ─────────────────────────────────────────────────
-document.addEventListener('DOMContentLoaded', () => {
-  // Load saved API key
-  const saved = localStorage.getItem('gemini_api_key');
-  if (saved) {
-    apiKey = saved;
-    document.getElementById('apiKeyInput').value = saved;
-    document.getElementById('keySavedMsg').style.display = 'block';
-    document.getElementById('keySavedMsg').textContent = '✓ API Key आधीच सेव्ह आहे!';
+// ── Load docx with dual-CDN fallback ─────────────────────────
+(function(){
+  function load(src, onErr){
+    const s=document.createElement('script'); s.src=src;
+    if(onErr) s.onerror=onErr;
+    document.head.appendChild(s);
   }
-
-  // Today's date default
-  document.getElementById('examDate').valueAsDate = new Date();
-
-  // Upload zone drag & drop
-  const zone = document.getElementById('uploadZone');
-  zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('drag-over'); });
-  zone.addEventListener('dragleave', () => zone.classList.remove('drag-over'));
-  zone.addEventListener('drop', e => {
-    e.preventDefault();
-    zone.classList.remove('drag-over');
-    handleFiles(Array.from(e.dataTransfer.files));
+  load('https://unpkg.com/docx@8.5.0/build/index.umd.js', ()=>{
+    load('https://cdn.jsdelivr.net/npm/docx@8.5.0/build/index.umd.js');
   });
+})();
+</script>
+<script>
+'use strict';
+// ═══════════════════════════════════════════════
+//  STATE
+// ═══════════════════════════════════════════════
+let pages=[], texts=[], apiKey='';
+const MODELS=['gemini-2.5-flash','gemini-2.0-flash','gemini-1.5-flash'];
 
-  document.getElementById('fileInput').addEventListener('change', e => {
-    handleFiles(Array.from(e.target.files));
-    e.target.value = '';
-  });
+// ═══════════════════════════════════════════════
+//  INIT
+// ═══════════════════════════════════════════════
+addEventListener('DOMContentLoaded',()=>{
+  const k=localStorage.getItem('gpsk');
+  if(k){apiKey=k;document.getElementById('apiKeyInput').value=k;showKeyOk();}
+  // Upload zone
+  const z=document.getElementById('zone');
+  z.addEventListener('dragover',e=>{e.preventDefault();z.classList.add('on');});
+  z.addEventListener('dragleave',()=>z.classList.remove('on'));
+  z.addEventListener('drop',e=>{e.preventDefault();z.classList.remove('on');addFiles([...e.dataTransfer.files]);});
+  document.getElementById('fi').addEventListener('change',e=>{addFiles([...e.target.files]);e.target.value='';});
 });
 
-// ─── API KEY ──────────────────────────────────────────────
-function saveApiKey() {
-  const val = document.getElementById('apiKeyInput').value.trim();
-  if (!val || !val.startsWith('AIza')) {
-    showAlert('⚠ योग्य API Key टाका. ती AIza ने सुरू होते.', 'error'); return;
-  }
-  apiKey = val;
-  localStorage.setItem('gemini_api_key', val);
-  const msg = document.getElementById('keySavedMsg');
-  msg.style.display = 'block';
-  msg.textContent = '✓ API Key सेव्ह झाली!';
-  updateProcessBtn();
+// ═══════════════════════════════════════════════
+//  API KEY
+// ═══════════════════════════════════════════════
+function saveKey(){
+  const v=document.getElementById('apiKeyInput').value.trim();
+  if(!v||!v.startsWith('AIza')){showAlert('⚠ योग्य API Key टाका — AIza ने सुरू होते','err');return;}
+  apiKey=v; localStorage.setItem('gpsk',v); showKeyOk(); updateBtn();
 }
+function showKeyOk(){const e=document.getElementById('keyOk');e.style.display='block';e.textContent='✓ API Key सेव्ह आहे!';}
 
-// ─── FILE HANDLING ────────────────────────────────────────
-async function handleFiles(files) {
-  const imageFiles = files.filter(f =>
-    f.type.startsWith('image/') || f.name.match(/\.(jpg|jpeg|png|webp|heic|heif)$/i)
-  );
-
-  if (imageFiles.length === 0) {
-    showAlert('⚠ फक्त image files (JPG, PNG, WEBP) upload करता येतात.', 'error'); return;
+// ═══════════════════════════════════════════════
+//  FILES
+// ═══════════════════════════════════════════════
+async function addFiles(files){
+  const imgs=files.filter(f=>/\.(jpe?g|png|webp|heic|heif)$/i.test(f.name)||f.type.startsWith('image/'));
+  if(!imgs.length){showAlert('⚠ फक्त image files (JPG, PNG, WEBP, HEIC)','err');return;}
+  const room=30-pages.length;
+  if(room<=0){showAlert('⚠ 30 pages ची limit झाली!','err');return;}
+  const add=imgs.slice(0,room);
+  if(imgs.length>room) showAlert(`⚠ फक्त ${room} pages add केले (limit: 30)`,'err');
+  for(const f of add){
+    const d=await readF(f);
+    pages.push({d,name:f.name});
   }
-  if (pages.length + imageFiles.length > 30) {
-    showAlert(`⚠ जास्तीत जास्त 30 pages! आत्ता ${pages.length} आहेत, आणखी ${30 - pages.length} add करता येतील.`, 'error');
-    imageFiles.splice(30 - pages.length);
-  }
-
-  for (const file of imageFiles) {
-    const dataUrl = await readFileAsDataURL(file);
-    pages.push({ file, dataUrl, name: file.name });
-  }
-  renderPages();
-  updateProcessBtn();
-  clearAlert();
+  renderPages(); updateBtn(); clearAlert();
 }
+function readF(f){return new Promise((res,rej)=>{const r=new FileReader();r.onload=e=>res(e.target.result);r.onerror=rej;r.readAsDataURL(f);});}
+function clearAll(){if(!confirm('सर्व pages काढायचे?'))return; pages=[];renderPages();updateBtn(); hide('metaPanel');hide('result');}
 
-function readFileAsDataURL(file) {
-  return new Promise((res, rej) => {
-    const r = new FileReader();
-    r.onload = e => res(e.target.result);
-    r.onerror = rej;
-    r.readAsDataURL(file);
-  });
-}
-
-// ─── RENDER PAGES ─────────────────────────────────────────
-function renderPages() {
-  const grid = document.getElementById('pagesGrid');
-  const area = document.getElementById('pagesArea');
-  area.style.display = pages.length ? 'block' : 'none';
-  document.getElementById('pageCountDisplay').textContent = pages.length;
-  grid.innerHTML = '';
-
-  pages.forEach((pg, i) => {
-    const div = document.createElement('div');
-    div.className = 'page-thumb';
-    div.draggable = true;
-    div.dataset.index = i;
-    div.innerHTML = `
-      <img src="${pg.dataUrl}" alt="Page ${i+1}" loading="lazy" />
-      <div class="pg-num">Page ${i + 1}</div>
-      <button class="remove-btn" onclick="removePage(${i}, event)" title="काढा">✕</button>
-    `;
-
-    // Drag reorder
-    div.addEventListener('dragstart', e => { e.dataTransfer.setData('text/plain', i); div.classList.add('dragging'); });
-    div.addEventListener('dragend', () => div.classList.remove('dragging'));
-    div.addEventListener('dragover', e => { e.preventDefault(); div.classList.add('drag-target'); });
-    div.addEventListener('dragleave', () => div.classList.remove('drag-target'));
-    div.addEventListener('drop', e => {
-      e.preventDefault();
-      div.classList.remove('drag-target');
-      const from = parseInt(e.dataTransfer.getData('text/plain'));
-      const to = i;
-      if (from !== to) {
-        const moved = pages.splice(from, 1)[0];
-        pages.splice(to, 0, moved);
-        renderPages();
-      }
+// ═══════════════════════════════════════════════
+//  RENDER PAGES
+// ═══════════════════════════════════════════════
+function renderPages(){
+  const g=document.getElementById('pgGrid');
+  document.getElementById('pgCount').textContent=pages.length;
+  document.getElementById('pgArea').style.display=pages.length?'block':'none';
+  g.innerHTML='';
+  pages.forEach((pg,i)=>{
+    const d=document.createElement('div');
+    d.className='pg'; d.draggable=true; d.dataset.i=i;
+    d.innerHTML=`<img src="${pg.d}" alt="pg${i+1}" loading="lazy"><div class="lbl">Page ${i+1}</div><div class="pst" id="ps${i}"></div><button class="rm" onclick="rmPg(${i},event)">✕</button>`;
+    d.addEventListener('dragstart',e=>{e.dataTransfer.setData('idx',''+i);d.classList.add('drag');});
+    d.addEventListener('dragend',()=>d.classList.remove('drag'));
+    d.addEventListener('dragover',e=>{e.preventDefault();d.classList.add('drop');});
+    d.addEventListener('dragleave',()=>d.classList.remove('drop'));
+    d.addEventListener('drop',e=>{
+      e.preventDefault();d.classList.remove('drop');
+      const from=+e.dataTransfer.getData('idx');
+      if(from!==i){const[m]=pages.splice(from,1);pages.splice(i,0,m);renderPages();}
     });
-    grid.appendChild(div);
+    g.appendChild(d);
   });
 }
+function rmPg(i,e){e.stopPropagation();pages.splice(i,1);renderPages();updateBtn();}
+function setPgSt(i,ic){const e=document.getElementById('ps'+i);if(e)e.textContent=ic;}
 
-function removePage(i, e) {
-  e.stopPropagation();
-  pages.splice(i, 1);
-  renderPages();
-  updateProcessBtn();
+// ═══════════════════════════════════════════════
+//  UI
+// ═══════════════════════════════════════════════
+function updateBtn(){
+  const b=document.getElementById('procBtn'),t=document.getElementById('procTxt');
+  if(!apiKey){b.disabled=true;t.textContent='🔑 आधी API Key टाका';return;}
+  if(!pages.length){b.disabled=true;t.textContent='📄 pages upload करा';return;}
+  b.disabled=false;t.innerHTML=`🚀 ${pages.length} page${pages.length>1?'s':''} scan करा → Word बनवा`;
 }
-
-function clearAllPages() {
-  if (!confirm('सर्व pages काढायचे का?')) return;
-  pages = [];
-  renderPages();
-  updateProcessBtn();
+function setP(pct,msg){document.getElementById('pf').style.width=pct+'%';document.getElementById('pt').textContent=msg;}
+function pill(lbl,st){
+  const c=document.getElementById('steps');
+  let p=[...c.children].find(x=>x.dataset.l===lbl);
+  if(!p){p=document.createElement('div');p.className='pill';p.dataset.l=lbl;p.textContent=lbl;c.appendChild(p);}
+  p.className='pill '+st;
 }
+function showAlert(msg,type){document.getElementById('alertBox').innerHTML=`<div class="alert al-${type}">${msg}</div>`;}
+function clearAlert(){document.getElementById('alertBox').innerHTML='';}
+function show(id){document.getElementById(id).classList.add('on');}
+function hide(id){document.getElementById(id).classList.remove('on');}
+function sleep(ms){return new Promise(r=>setTimeout(r,ms));}
 
-// ─── UI HELPERS ───────────────────────────────────────────
-function updateProcessBtn() {
-  const btn = document.getElementById('processBtn');
-  const txt = document.getElementById('processBtnText');
-  if (!apiKey) {
-    btn.disabled = true;
-    txt.textContent = '🔑 आधी API Key टाका';
-  } else if (pages.length === 0) {
-    btn.disabled = true;
-    txt.textContent = '📄 pages upload करा';
-  } else {
-    btn.disabled = false;
-    txt.innerHTML = `🚀 ${pages.length} page${pages.length > 1 ? 's' : ''} process करा → Word बनवा`;
-  }
-}
+// ═══════════════════════════════════════════════
+//  GEMINI API — model fallback + rate limit retry
+// ═══════════════════════════════════════════════
+async function gemini(prompt, b64, mime){
+  let lastErr='';
+  for(const model of MODELS){
+    for(let try_=1;try_<=3;try_++){
+      let resp;
+      try{
+        resp=await fetch(
+          `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
+          {method:'POST',headers:{'Content-Type':'application/json'},
+           body:JSON.stringify({
+             contents:[{parts:[{inlineData:{mimeType:mime,data:b64}},{text:prompt}]}],
+             generationConfig:{temperature:0.1,maxOutputTokens:8192}
+           })}
+        );
+      }catch(ne){throw new Error('Network error — internet connection तपासा');}
 
-function showAlert(msg, type) {
-  document.getElementById('alertBox').innerHTML =
-    `<div class="alert alert-${type}">${msg}</div>`;
-}
-function clearAlert() { document.getElementById('alertBox').innerHTML = ''; }
-
-function setProgress(pct, status) {
-  document.getElementById('progressFill').style.width = pct + '%';
-  document.getElementById('progressStatus').textContent = status;
-}
-
-function markStep(label, state) {
-  const container = document.getElementById('progressSteps');
-  let pill = Array.from(container.children).find(el => el.dataset.label === label);
-  if (!pill) {
-    pill = document.createElement('div');
-    pill.className = 'step-pill';
-    pill.dataset.label = label;
-    pill.textContent = label;
-    container.appendChild(pill);
-  }
-  pill.className = 'step-pill ' + state;
-}
-
-// ─── GEMINI OCR ───────────────────────────────────────────
-async function ocrPageWithGemini(dataUrl, pageNum, totalPages) {
-  const subject = document.getElementById('subject').value || 'unknown';
-
-  // Determine language hint
-  const langHint = ['मराठी'].includes(subject)
-    ? 'This is a Marathi language paper. Use Devanagari script.'
-    : ['हिंदी'].includes(subject)
-    ? 'This is a Hindi language paper. Use Devanagari script.'
-    : ['संस्कृत'].includes(subject)
-    ? 'This is a Sanskrit language paper. Use Devanagari script.'
-    : 'This may contain Marathi, Hindi, Sanskrit, or English text. Preserve the original script exactly.';
-
-  const base64 = dataUrl.split(',')[1];
-  const mimeType = dataUrl.split(';')[0].split(':')[1] || 'image/jpeg';
-
-  const prompt = `You are extracting text from a handwritten school question paper (page ${pageNum} of ${totalPages}).
-
-Subject: ${subject}
-${langHint}
-
-Instructions:
-1. Extract ALL text exactly as written — questions, instructions, marks, everything.
-2. Preserve question numbers (Q.1, Q.2, प्र.१, etc.) exactly.
-3. Preserve marks like [2], (3 गुण), (Marks: 5) exactly.
-4. For Devanagari (मराठी/हिंदी/संस्कृत): output in proper Unicode Devanagari.
-5. For English: output as-is.
-6. Separate each question/section with a blank line.
-7. If text is unclear, write [अस्पष्ट] for that word.
-8. Do NOT add any explanation or commentary — only the extracted text.
-9. Do NOT add markdown formatting like ** or ##.
-
-Extract all text from this image now:`;
-
-  // Try models in order — fallback if one is not available in the user's region/tier
-  const MODELS = [
-    'gemini-2.5-flash',
-    'gemini-2.0-flash',
-    'gemini-1.5-flash',
-  ];
-
-  let lastError = null;
-  for (const model of MODELS) {
-    const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          contents: [{
-            parts: [
-              { inlineData: { mimeType, data: base64 } },
-              { text: prompt }
-            ]
-          }],
-          generationConfig: {
-            temperature: 0.1,
-            maxOutputTokens: 4096,
-          }
-        })
+      if(resp.ok){
+        const data=await resp.json();
+        return (data?.candidates?.[0]?.content?.parts?.[0]?.text||'').trim();
       }
-    );
+      let em='';
+      try{const ej=await resp.json();em=ej?.error?.message||resp.statusText;}catch{em=resp.statusText;}
 
-    if (response.ok) {
-      const data = await response.json();
-      const text = data?.candidates?.[0]?.content?.parts?.[0]?.text;
-      if (!text) throw new Error(`Page ${pageNum}: कोणताही मजकूर आढळला नाही.`);
-      return text.trim();
+      if(resp.status===400&&/api.?key/i.test(em)) throw new Error('API Key चुकीची! aistudio.google.com वर नवीन key घ्या.');
+      if(resp.status===403) throw new Error('API Key ला permission नाही. Google AI Studio मध्ये Gemini API enable केले का?');
+      if(resp.status===429){
+        const wait=try_*20;
+        setP(-1,`⏳ Rate limit — ${wait} sec थांबतो (attempt ${try_}/3)...`);
+        await sleep(wait*1000); continue;
+      }
+      if(resp.status===404||/not found|not supported/i.test(em)){lastErr=em;break;} // try next model
+      lastErr=em;
+      if(try_<3){await sleep(4000);continue;}
     }
-
-    const err = await response.json();
-    const msg = err?.error?.message || response.statusText;
-
-    // Hard errors — don't retry with another model
-    if (response.status === 400 && (msg.includes('API_KEY') || msg.includes('API key'))) {
-      throw new Error('API Key चुकीची आहे! aistudio.google.com वर जाऊन नवीन key घ्या.');
-    }
-    if (response.status === 429) {
-      throw new Error('API limit पोहोचली. काही मिनिटांनी परत try करा.');
-    }
-    if (response.status === 403) {
-      throw new Error('API Key ला permission नाही. AI Studio मध्ये Gemini API enable करा.');
-    }
-
-    // Model not found — try next one
-    if (response.status === 404 || msg.includes('not found') || msg.includes('not supported')) {
-      lastError = msg;
-      continue;
-    }
-
-    throw new Error(`Gemini error: ${msg}`);
   }
-
-  throw new Error(`सर्व models उपलब्ध नाहीत. Error: ${lastError}`);
+  throw new Error(`Gemini: ${lastErr||'सर्व models अनुपलब्ध'}`);
 }
 
-// ─── MAIN PROCESSING ──────────────────────────────────────
-async function startProcessing() {
-  if (!apiKey) { showAlert('⚠ API Key टाका!', 'error'); return; }
-  if (pages.length === 0) { showAlert('⚠ Pages upload करा!', 'error'); return; }
+function b64(dataUrl){
+  return {b64:dataUrl.split(',')[1], mime:dataUrl.split(';')[0].split(':')[1]||'image/jpeg'};
+}
 
-  // UI: show progress
-  document.getElementById('processBtn').disabled = true;
-  document.getElementById('progressSection').classList.add('active');
-  document.getElementById('resultSection').classList.remove('active');
-  document.getElementById('progressSteps').innerHTML = '';
+// ═══════════════════════════════════════════════
+//  MAIN SCAN
+// ═══════════════════════════════════════════════
+async function go(){
+  if(!apiKey){showAlert('⚠ API Key टाका!','err');return;}
+  if(!pages.length){showAlert('⚠ Pages upload करा!','err');return;}
+
+  document.getElementById('procBtn').disabled=true;
+  show('prog');
+  hide('result');
+  hide('metaPanel');
+  document.getElementById('steps').innerHTML='';
   clearAlert();
-  extractedTexts = [];
+  texts=[];
 
-  try {
-    setProgress(5, 'सुरुवात...');
-    markStep('Gemini AI', 'active');
+  try{
+    // ── 1. Scan each page ──
+    pill('OCR','act');
+    for(let i=0;i<pages.length;i++){
+      const n=i+1;
+      setP(Math.round(5+(i/pages.length)*72),`Page ${n} / ${pages.length} scan होत आहे...`);
+      pill(`Pg ${n}`,'act');
+      setPgSt(i,'⏳');
 
-    for (let i = 0; i < pages.length; i++) {
-      const pageNum = i + 1;
-      const pct = Math.round(5 + ((i / pages.length) * 80));
-      setProgress(pct, `Page ${pageNum} / ${pages.length} — AI मजकूर काढत आहे...`);
-      markStep(`Page ${pageNum}`, 'active');
+      const {b64:d,mime:m}=b64(pages[i].d);
+      const prompt=`You are scanning a handwritten Indian school question paper — page ${n} of ${pages.length}.
 
-      const text = await ocrPageWithGemini(pages[i].dataUrl, pageNum, pages.length);
-      extractedTexts.push(text);
-      markStep(`Page ${pageNum}`, 'done');
+Extract ALL text exactly as written on the paper. Follow these rules strictly:
+1. Output Devanagari script (मराठी/हिंदी/संस्कृत) in proper Unicode Devanagari.
+2. Output English text as-is.
+3. Preserve question numbers exactly: Q.1, Q.2, प्र.१, प्र.२, 1., 2., (अ), (ब) etc.
+4. Preserve marks: [2], (3 गुण), (Marks: 5) exactly.
+5. Put a blank line between each question/section.
+6. Mark unclear words as [?].
+7. Output ONLY the extracted text. No explanations. No markdown symbols (**, ##, __, etc.).`;
 
-      // Small delay to avoid rate limiting
-      if (i < pages.length - 1) await new Promise(r => setTimeout(r, 500));
+      try{
+        const t=await gemini(prompt,d,m);
+        texts.push(t);
+        pill(`Pg ${n}`,'ok');
+        setPgSt(i,'✅');
+      }catch(e){
+        texts.push(`[Page ${n} — scan अयशस्वी]`);
+        pill(`Pg ${n}`,'err');
+        setPgSt(i,'❌');
+        if(/API Key|permission/i.test(e.message)) throw e;
+      }
+
+      // 2s gap between pages to respect rate limits
+      if(i<pages.length-1) await sleep(2000);
     }
+    pill('OCR','ok');
 
-    markStep('Gemini AI', 'done');
-    setProgress(88, 'मजकूर एकत्र करत आहे...');
-    markStep('Text Processing', 'active');
+    // ── 2. Extract metadata from page 1 ──
+    setP(82,'माहिती ओळखत आहे...');
+    pill('माहिती','act');
+    await extractMeta();
+    pill('माहिती','ok');
 
-    const combined = buildCombinedText();
-    showPreview(combined);
+    // ── 3. Show result ──
+    setP(100,'✅ पूर्ण झाले!');
+    pill('Preview','ok');
+    document.getElementById('preview').textContent=buildBody();
+    show('result');
+    show('metaPanel');
+    document.getElementById('metaPanel').scrollIntoView({behavior:'smooth',block:'start'});
 
-    markStep('Text Processing', 'done');
-    setProgress(100, '✅ पूर्ण झाले!');
-    document.getElementById('resultSection').classList.add('active');
-    document.getElementById('resultSection').scrollIntoView({ behavior: 'smooth', block: 'start' });
-
-  } catch (err) {
-    setProgress(0, '');
-    showAlert(`❌ Error: ${err.message}`, 'error');
-    document.getElementById('processBtn').disabled = false;
-    updateProcessBtn();
+  }catch(err){
+    setP(0,'');
+    showAlert(`❌ ${err.message}`,'err');
+    document.getElementById('procBtn').disabled=false;
+    updateBtn();
   }
 }
 
-// ─── BUILD COMBINED TEXT ──────────────────────────────────
-function buildCombinedText() {
-  const school = document.getElementById('schoolName').value.trim();
-  const subject = document.getElementById('subject').value;
-  const grade = document.getElementById('classGrade').value;
-  const examType = document.getElementById('examType').value;
-  const date = document.getElementById('examDate').value;
-  const marks = document.getElementById('totalMarks').value;
-  const duration = document.getElementById('duration').value.trim();
+// ═══════════════════════════════════════════════
+//  METADATA EXTRACTION
+// ═══════════════════════════════════════════════
+async function extractMeta(){
+  if(!texts.length) return;
+  const {b64:d,mime:m}=b64(pages[0].d);
+  const prompt=`Look at this Indian school question paper image.
+Extract ONLY header info. Return ONLY this exact JSON (no other text, no markdown):
+{"school":"","subject":"","class":"","examType":"","date":"","marks":"","time":""}
 
-  let header = '';
-  if (school) header += school + '\n';
-  if (subject || grade) header += [subject, grade].filter(Boolean).join(' — ') + '\n';
-  if (examType) header += examType + '\n';
-  if (date) {
-    const d = new Date(date);
-    header += 'तारीख: ' + d.toLocaleDateString('mr-IN', {day:'2-digit',month:'2-digit',year:'numeric'}) + '\n';
-  }
-  if (marks) header += 'एकूण गुण: ' + marks;
-  if (duration) header += (marks ? '    ' : '') + 'वेळ: ' + duration;
-  if (marks || duration) header += '\n';
+Rules:
+- school: school name as written
+- subject: subject name in original language (मराठी/English/हिंदी/संस्कृत etc)
+- class: class e.g. इयत्ता १० वी or Class 10
+- examType: exam type e.g. प्रथम सत्र परीक्षा or Unit Test
+- date: date as written on paper
+- marks: total marks number only e.g. 100
+- time: duration e.g. ३ तास or 3 Hours
+- Use empty string "" for anything not found.`;
 
-  const separator = '─'.repeat(60);
-  let combined = header ? header + '\n' + separator + '\n\n' : '';
-
-  extractedTexts.forEach((text, i) => {
-    if (extractedTexts.length > 1) {
-      combined += `\n\n[Page ${i + 1}]\n` + separator + '\n\n';
-    }
-    combined += text + '\n';
-  });
-
-  return combined.trim();
+  try{
+    const raw=await gemini(prompt,d,m);
+    const match=raw.match(/\{[\s\S]*?\}/);
+    if(!match) return;
+    const meta=JSON.parse(match[0]);
+    const set=(id,v)=>{const e=document.getElementById(id);if(e)e.value=v||'';};
+    set('m_school',meta.school);
+    set('m_subj',meta.subject);
+    set('m_cls',meta.class);
+    set('m_exam',meta.examType);
+    set('m_date',meta.date);
+    set('m_marks',meta.marks);
+    set('m_time',meta.time);
+  }catch(e){console.warn('Meta fail:',e);} // non-fatal
 }
 
-// ─── SHOW PREVIEW ────────────────────────────────────────
-function showPreview(text) {
-  const el = document.getElementById('textPreview');
-  el.textContent = text;
+// ═══════════════════════════════════════════════
+//  BUILD BODY TEXT
+// ═══════════════════════════════════════════════
+function buildBody(){
+  return texts.map((t,i)=>
+    (texts.length>1 ? (i>0?'\n\n':'')+`━━━ Page ${i+1} ━━━\n\n` : '')+t
+  ).join('\n').trim();
+}
+function getMeta(){
+  const g=id=>document.getElementById(id).value.trim();
+  return {school:g('m_school'),subj:g('m_subj'),cls:g('m_cls'),exam:g('m_exam'),date:g('m_date'),marks:g('m_marks'),time:g('m_time')};
 }
 
-// ─── COPY ────────────────────────────────────────────────
-function copyToClipboard() {
-  const text = document.getElementById('textPreview').innerText;
-  navigator.clipboard.writeText(text).then(() => {
-    showAlert('✓ Text clipboard मध्ये copy झाला!', 'success');
-    setTimeout(clearAlert, 3000);
-  }).catch(() => showAlert('Copy failed. Text manually select करा.', 'error'));
+// ═══════════════════════════════════════════════
+//  COPY
+// ═══════════════════════════════════════════════
+function copyTxt(){
+  const m=getMeta();
+  const hdr=[
+    m.school,
+    [m.subj,m.cls].filter(Boolean).join(' | '),
+    m.exam,
+    [m.date?'तारीख: '+m.date:'',m.marks?'गुण: '+m.marks:'',m.time?'वेळ: '+m.time:''].filter(Boolean).join('   ')
+  ].filter(Boolean).join('\n');
+  const body=document.getElementById('preview').innerText;
+  const full=hdr?hdr+'\n'+'─'.repeat(50)+'\n\n'+body:body;
+  navigator.clipboard.writeText(full)
+    .then(()=>{showAlert('✅ Text copy झाला!','ok');setTimeout(clearAlert,3000);})
+    .catch(()=>showAlert('Copy failed — text manually select करा','err'));
 }
 
-// ─── DOWNLOAD DOCX ───────────────────────────────────────
-async function downloadDocx() {
-  if (typeof docx === 'undefined') {
-    showAlert('⚠ docx library load झाली नाही. Internet connection तपासा.', 'error');
-    return;
-  }
+// ═══════════════════════════════════════════════
+//  DOWNLOAD DOCX
+// ═══════════════════════════════════════════════
+async function dlDocx(){
+  const btn=document.getElementById('dlBtn');
+  btn.disabled=true; btn.textContent='⏳ तयार होत आहे...';
+  try{
+    const lib=await waitDocx(10000);
+    if(!lib) throw new Error('docx library load झाली नाही — page refresh करा.');
 
-  const rawText = document.getElementById('textPreview').innerText || buildCombinedText();
-  const school = document.getElementById('schoolName').value.trim() || 'शाळा';
-  const subject = document.getElementById('subject').value || 'विषय';
-  const grade = document.getElementById('classGrade').value || '';
-  const examType = document.getElementById('examType').value || '';
-  const dateVal = document.getElementById('examDate').value;
-  const marks = document.getElementById('totalMarks').value;
-  const duration = document.getElementById('duration').value.trim();
+    const {Document,Packer,Paragraph,TextRun,AlignmentType,BorderStyle}=lib;
+    const m=getMeta();
+    const bodyTxt=document.getElementById('preview').innerText||buildBody();
 
-  const { Document, Packer, Paragraph, TextRun, AlignmentType, HeadingLevel, BorderStyle } = docx;
+    // Helper
+    const P=(text,{bold=false,size=22,center=false,color,sb=0,sa=70}={})=>
+      new Paragraph({
+        children:[new TextRun({text,bold,size,font:'Noto Sans Devanagari',color:color||undefined})],
+        alignment:center?AlignmentType.CENTER:AlignmentType.LEFT,
+        spacing:{before:sb,after:sa},
+      });
 
-  const children = [];
+    const kids=[];
 
-  // ── School Name (bold, centered, large)
-  if (school) {
-    children.push(new Paragraph({
-      children: [new TextRun({ text: school, bold: true, size: 30, font: 'Noto Sans Devanagari' })],
-      alignment: AlignmentType.CENTER,
-      spacing: { after: 60 },
-    }));
-  }
+    // ── Header ──
+    if(m.school) kids.push(P(m.school,{bold:true,size:32,center:true,sa:80}));
+    const sl=[m.subj,m.cls].filter(Boolean).join('  |  ');
+    if(sl) kids.push(P(sl,{bold:true,size:28,center:true,sa:60}));
+    if(m.exam) kids.push(P(m.exam,{size:24,center:true,sa:60}));
+    const mr=[m.date?'तारीख: '+m.date:'',m.marks?'एकूण गुण: '+m.marks:'',m.time?'वेळ: '+m.time:''].filter(Boolean).join('          ');
+    if(mr) kids.push(P(mr,{size:22,center:true,sa:100}));
 
-  // ── Subject + Grade
-  const subjLine = [subject, grade].filter(Boolean).join(' — ');
-  if (subjLine) {
-    children.push(new Paragraph({
-      children: [new TextRun({ text: subjLine, bold: true, size: 26, font: 'Noto Sans Devanagari' })],
-      alignment: AlignmentType.CENTER,
-      spacing: { after: 40 },
-    }));
-  }
+    // Divider
+    kids.push(new Paragraph({border:{bottom:{style:BorderStyle.SINGLE,size:12,color:'444444',space:1}},spacing:{after:240}}));
 
-  // ── Exam Type
-  if (examType) {
-    children.push(new Paragraph({
-      children: [new TextRun({ text: examType, size: 24, font: 'Noto Sans Devanagari' })],
-      alignment: AlignmentType.CENTER,
-      spacing: { after: 40 },
-    }));
-  }
-
-  // ── Date / Marks / Duration row
-  const metaParts = [];
-  if (dateVal) {
-    const d = new Date(dateVal);
-    metaParts.push('तारीख: ' + d.toLocaleDateString('mr-IN'));
-  }
-  if (marks) metaParts.push('एकूण गुण: ' + marks);
-  if (duration) metaParts.push('वेळ: ' + duration);
-  if (metaParts.length) {
-    children.push(new Paragraph({
-      children: [new TextRun({ text: metaParts.join('    '), size: 22, font: 'Noto Sans Devanagari' })],
-      alignment: AlignmentType.CENTER,
-      spacing: { after: 80 },
-    }));
-  }
-
-  // ── Divider line (via border)
-  children.push(new Paragraph({
-    border: { bottom: { style: BorderStyle.SINGLE, size: 8, color: '333333' } },
-    spacing: { after: 200 },
-  }));
-
-  // ── Body text — split into paragraphs
-  const lines = rawText.split('\n');
-  let inHeader = true;
-  let headerLineCount = 0;
-
-  for (const line of lines) {
-    // Skip header lines (already added above)
-    if (inHeader) {
-      if (line === '─'.repeat(60) || line.startsWith('─')) { inHeader = false; continue; }
-      headerLineCount++;
-      if (headerLineCount < 10) continue; // skip header portion
-    }
-
-    const trimmed = line.trim();
-
-    if (trimmed === '' || trimmed.startsWith('─')) {
-      children.push(new Paragraph({ spacing: { after: 120 } }));
-      continue;
-    }
-
-    // Page marker
-    if (/^\[Page \d+\]/.test(trimmed)) {
-      children.push(new Paragraph({
-        children: [new TextRun({ text: trimmed, bold: true, size: 22, color: '666666', font: 'Noto Sans Devanagari' })],
-        spacing: { before: 200, after: 80 },
+    // ── Body lines ──
+    for(const line of bodyTxt.split('\n')){
+      const t=line.trim();
+      if(!t){kids.push(new Paragraph({spacing:{after:80}}));continue;}
+      if(/^━+\s*Page\s*\d+/.test(t)){
+        kids.push(P(t,{size:20,color:'888888',sb:220,sa:100})); continue;
+      }
+      const isQ=/^(Q\.?\s*\d|q\.?\s*\d|प्र\.?\s*[१२३४५६७८९०\d]|प्रश्न\s*[१२३४५६७८९०\d]|\d+\s*[.)]\s+\S)/u.test(t);
+      kids.push(new Paragraph({
+        children:[new TextRun({text:t,bold:isQ,size:isQ?24:22,font:'Noto Sans Devanagari'})],
+        spacing:{after:isQ?160:60},
+        indent:isQ?{}:{left:440},
       }));
-      continue;
     }
 
-    // Question line — starts with Q. or प्र. or number pattern
-    const isQuestion = /^(Q\.|q\.|प्र\.|प्रश्न|Question|\d+[.)]\s)/i.test(trimmed);
+    const doc=new Document({sections:[{
+      properties:{page:{margin:{top:1080,bottom:1080,left:1080,right:1080}}},
+      children:kids,
+    }]});
 
-    children.push(new Paragraph({
-      children: [new TextRun({
-        text: trimmed,
-        bold: isQuestion,
-        size: isQuestion ? 24 : 22,
-        font: 'Noto Sans Devanagari',
-      })],
-      spacing: { after: isQuestion ? 120 : 60 },
-      indent: isQuestion ? {} : { left: 360 },
-    }));
+    const blob=await Packer.toBlob(doc);
+    const fname=([m.subj,m.cls,m.exam].filter(Boolean).join('_')||'QuestionPaper').replace(/[\s/\\:*?"<>|]+/g,'_');
+    dlBlob(blob,fname+'.docx');
+    showAlert('✅ Word file download सुरू झाली!','ok');
+    setTimeout(clearAlert,4000);
+
+  }catch(e){
+    showAlert(`❌ Download error: ${e.message}`,'err');
+  }finally{
+    btn.disabled=false; btn.innerHTML='⬇ Word (.docx) डाउनलोड';
   }
-
-  // ── Build & save
-  const doc = new Document({
-    sections: [{
-      properties: {
-        page: {
-          margin: { top: 1134, bottom: 1134, left: 1134, right: 1134 }, // ~2cm
-        }
-      },
-      children,
-    }],
-  });
-
-  const blob = await Packer.toBlob(doc);
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  const fname = [subject, grade, examType].filter(Boolean).join('_').replace(/\s+/g, '_') || 'QuestionPaper';
-  a.href = url;
-  a.download = fname + '.docx';
-  a.click();
-  URL.revokeObjectURL(url);
-
-  showAlert('✅ Word file download सुरू झाली!', 'success');
-  setTimeout(clearAlert, 4000);
 }
 
-// ─── RESET ───────────────────────────────────────────────
-function resetAll() {
-  pages = [];
-  extractedTexts = [];
-  renderPages();
-  updateProcessBtn();
-  document.getElementById('progressSection').classList.remove('active');
-  document.getElementById('resultSection').classList.remove('active');
-  document.getElementById('progressSteps').innerHTML = '';
-  document.getElementById('progressFill').style.width = '0%';
+function dlBlob(blob,name){
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.style.display='none'; a.href=url; a.download=name;
+  document.body.appendChild(a); a.click();
+  setTimeout(()=>{document.body.removeChild(a);URL.revokeObjectURL(url);},3000);
+}
+
+function waitDocx(ms){
+  return new Promise(res=>{
+    if(window.docx){res(window.docx);return;}
+    const t0=Date.now();
+    const iv=setInterval(()=>{
+      if(window.docx){clearInterval(iv);res(window.docx);}
+      else if(Date.now()-t0>ms){clearInterval(iv);res(null);}
+    },200);
+  });
+}
+
+// ═══════════════════════════════════════════════
+//  RESET
+// ═══════════════════════════════════════════════
+function resetAll(){
+  pages=[];texts=[];
+  renderPages();updateBtn();
+  hide('prog');hide('result');hide('metaPanel');
+  document.getElementById('steps').innerHTML='';
+  document.getElementById('pf').style.width='0%';
   clearAlert();
-  window.scrollTo({ top: 0, behavior: 'smooth' });
+  scrollTo({top:0,behavior:'smooth'});
 }
 </script>
 </body>
