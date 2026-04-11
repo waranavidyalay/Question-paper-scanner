@@ -381,95 +381,137 @@ async function go(){
   }
 }
 
-// ── SMART MERGE — question-number aware ──────────
-// सर्व pages चा text एकत्र करतो, duplicate question numbers काढतो,
-// आणि Q.1, Q.2... / प्र.१, प्र.२... / 1., 2. नुसार sort करतो
+// ══════════════════════════════════════════════════════
+//  SMART MERGE v2 — robust question-number sort
+//
+//  Logic:
+//  1. सर्व pages चा raw text एकत्र करतो (page separator टाकतो)
+//  2. प्रत्येक line मधून question number काढतो
+//  3. प्रत्येक question चा एक "block" बनवतो
+//     (question line + त्याखालील सर्व sub-lines जोपर्यंत पुढचा question येत नाही)
+//  4. Blocks question number नुसार sort करतो (१,२,३... किंवा Q.1,Q.2... )
+//  5. Paper header (school name, subject etc.) वर ठेवतो
+//  6. एकच question number multiple pages वर split असल्यास एकत्र जोडतो
+// ══════════════════════════════════════════════════════
+
+// देवनागरी अंक → Arabic digit
+function devToNum(s) {
+  return String(s).replace(/[०१२३४५६७८९]/g, d => '०१२३४५६७८९'.indexOf(d));
+}
+
+// एका line मधून question number काढतो
+// Returns: integer (1-200) किंवा null
+function getQNum(line) {
+  const t = line.trim();
+  if (!t) return null;
+
+  // Q.1 / Q1 / q.2 / Q. 3
+  let m = t.match(/^[Qq]\.?\s*(\d{1,3})\b/);
+  if (m) return parseInt(m[1]);
+
+  // प्र.१ / प्र १ / प्रश्न २ / प्र. ३
+  m = t.match(/^(?:प्र(?:श्न)?\.?\s*)([०-९\d]{1,3})\b/u);
+  if (m) return parseInt(devToNum(m[1]));
+
+  // 1. text / 1) text / 1 . text  (standalone number at start, followed by . or ) then space+text)
+  // Must have content after — not just a lone number
+  m = t.match(/^([१-९\d]{1,2})\s*[.)।]\s+\S/u);
+  if (m) {
+    const n = parseInt(devToNum(m[1]));
+    if (n >= 1 && n <= 100) return n;
+  }
+
+  return null;
+}
+
+// ── Main merge function ──────────────────────────────
 function smartMerge(pageTexts) {
-  // Step 1: Combine all text
-  const allText = pageTexts.join('\n\n');
+  if (!pageTexts || pageTexts.length === 0) return '';
 
-  // Step 2: Split into question blocks
-  // Pattern: lines starting with question numbers
-  const Q_PATTERN = /^(?:Q\.?\s*(\d+)|q\.?\s*(\d+)|प्र\.?\s*([१२३४५६७८९०\d]+)|प्रश्न\s*([१२३४५६७८९०\d]+)|(\d+)\s*[.)]\s+\S)/mu;
+  // ── Step 1: Flatten all pages into lines, tagging each with its source page
+  const allLines = [];
+  pageTexts.forEach((text, pi) => {
+    if (!text || !text.trim()) return;
+    text.split('\n').forEach(line => allLines.push(line));
+    // lightweight page boundary marker (won't show in output)
+    allLines.push('\x00PAGE_END\x00');
+  });
 
-  const lines = allText.split('\n');
-  const blocks = []; // [{qNum: number|null, text: string}]
-  let currentBlock = {qNum: null, lines: []};
+  // ── Step 2: Parse lines into blocks
+  // A block = { qNum: number|null, lines: string[] }
+  // qNum===null  → header/instructions before first question
+  // qNum===-1    → floating text not attached to any question
+  const blocks = [];
+  let cur = { qNum: null, lines: [] };
 
-  for (const line of lines) {
-    const trimmed = line.trim();
-    if (!trimmed) { currentBlock.lines.push(''); continue; }
+  for (const raw of allLines) {
+    // Skip internal page markers
+    if (raw === '\x00PAGE_END\x00') continue;
 
-    const qNum = extractQNum(trimmed);
-    if (qNum !== null && qNum > 0) {
-      // Save previous block
-      if (currentBlock.lines.some(l => l.trim())) {
-        blocks.push({ qNum: currentBlock.qNum, text: currentBlock.lines.join('\n').trim() });
+    const line = raw.trimEnd();
+    const qn = getQNum(line);
+
+    if (qn !== null) {
+      // New question starts — save previous block if non-empty
+      if (cur.lines.some(l => l.trim())) {
+        blocks.push({ ...cur, lines: [...cur.lines] });
       }
-      currentBlock = { qNum, lines: [trimmed] };
+      cur = { qNum: qn, lines: [line] };
     } else {
-      currentBlock.lines.push(trimmed);
+      cur.lines.push(line);
     }
   }
   // Save last block
-  if (currentBlock.lines.some(l => l.trim())) {
-    blocks.push({ qNum: currentBlock.qNum, text: currentBlock.lines.join('\n').trim() });
+  if (cur.lines.some(l => l.trim())) {
+    blocks.push({ ...cur, lines: [...cur.lines] });
   }
 
-  // Step 3: Separate header (blocks before first numbered question) from body
-  let headerIdx = blocks.findIndex(b => b.qNum !== null);
-  const headerBlocks = headerIdx > 0 ? blocks.slice(0, headerIdx) : [];
-  const qBlocks = headerIdx >= 0 ? blocks.slice(headerIdx) : blocks;
+  // ── Step 3: Separate header from question blocks
+  const firstQIdx = blocks.findIndex(b => b.qNum !== null);
+  const headerBlocks = firstQIdx > 0 ? blocks.slice(0, firstQIdx) : [];
+  const qBlocks      = firstQIdx >= 0 ? blocks.slice(firstQIdx) : [];
 
-  // Step 4: Deduplicate — if same question number appears from multiple pages, keep the longer one
-  const qMap = new Map(); // qNum → block
+  // ── Step 4: Merge blocks with same question number
+  // (एकच question अनेक pages वर split असतो — त्याचे सर्व तुकडे एकत्र करतो)
+  const qMap = new Map(); // qNum → { lines: [] }
+
   for (const b of qBlocks) {
-    if (b.qNum === null) {
-      // Floating text — attach to previous question or keep as-is
-      const key = 'float_' + qMap.size;
-      qMap.set(key, b);
-      continue;
-    }
-    const existing = qMap.get(b.qNum);
-    if (!existing || b.text.length > existing.text.length) {
-      qMap.set(b.qNum, b);
+    if (b.qNum === null) continue; // skip orphan lines for now
+    if (!qMap.has(b.qNum)) {
+      qMap.set(b.qNum, { lines: [...b.lines] });
+    } else {
+      // Append continuation lines (skip duplicate first line if same)
+      const existing = qMap.get(b.qNum);
+      const newLines = b.lines.filter(l => l.trim());
+      // Avoid duplicating the question header line
+      const firstNew = newLines[0]?.trim();
+      const alreadyHas = existing.lines.some(l => l.trim() === firstNew);
+      if (alreadyHas) {
+        existing.lines.push(...newLines.slice(1));
+      } else {
+        existing.lines.push(...newLines);
+      }
     }
   }
 
-  // Step 5: Sort by question number
-  const sorted = [...qMap.entries()]
-    .sort((a, b) => {
-      const na = typeof a[0] === 'number' ? a[0] : 9999;
-      const nb = typeof b[0] === 'number' ? b[0] : 9999;
-      return na - nb;
-    })
-    .map(([,block]) => block.text);
+  // ── Step 5: Sort by question number
+  const sortedEntries = [...qMap.entries()].sort((a, b) => a[0] - b[0]);
 
-  // Step 6: Build final output
-  const headerText = headerBlocks.map(b => b.text).join('\n\n');
-  const bodyText = sorted.join('\n\n');
+  // ── Step 6: Build final output string
+  const headerText = headerBlocks
+    .map(b => b.lines.join('\n').trim())
+    .filter(Boolean)
+    .join('\n\n');
+
+  const bodyText = sortedEntries
+    .map(([, blk]) => {
+      // Clean up trailing blank lines within block
+      const cleaned = blk.lines.join('\n').trimEnd();
+      return cleaned;
+    })
+    .join('\n\n');
 
   return [headerText, bodyText].filter(Boolean).join('\n\n');
-}
-
-// Extract question number from a line
-function extractQNum(line) {
-  const devanagariToDigit = s => s.replace(/[१२३४५६७८९०]/g, d => '१२३४५६७८९०'.indexOf(d)+1+'').replace(/०/g,'0');
-
-  // Q.1 or Q1
-  let m = line.match(/^[Qq]\.?\s*(\d+)/);
-  if (m) return parseInt(m[1]);
-
-  // प्र.१ or प्र १
-  m = line.match(/^(?:प्र\.?\s*|प्रश्न\s*)([१२३४५६७८९०\d]+)/u);
-  if (m) return parseInt(devanagariToDigit(m[1]));
-
-  // 1. or 1) followed by space and text
-  m = line.match(/^(\d+)\s*[.)]\s+\S/);
-  if (m) { const n=parseInt(m[1]); if(n>=1&&n<=50) return n; }
-
-  // (अ) (ब) style — return null (sub-questions)
-  return null;
 }
 
 // ── Meta extraction ───────────────────────────────
@@ -557,10 +599,7 @@ async function dlDocx(){
 }
 
 function extractQNumStr(line){
-  if(/^[Qq]\.?\s*\d+/.test(line)) return true;
-  if(/^(?:प्र\.?\s*|प्रश्न\s*)[१२३४५६७८९०\d]+/u.test(line)) return true;
-  if(/^\d+\s*[.)]\s+\S/.test(line)){ const n=parseInt(line);return n>=1&&n<=50; }
-  return null;
+  return getQNum(line) !== null;
 }
 
 function dlBlob(blob,name){

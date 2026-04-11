@@ -51,16 +51,21 @@ export default async function handler(req, res) {
   // ── Build prompt
   let prompt;
   if (taskType === 'ocr') {
-    prompt = `You are scanning handwritten Indian school question paper — page ${pageNum} of ${totalPages}.
+    prompt = `You are scanning page ${pageNum} of ${totalPages} of a handwritten Indian school question paper.
 
-CRITICAL RULES:
-1. Extract ALL text EXACTLY as written on the paper.
-2. Devanagari script (मराठी/हिंदी/संस्कृत) → proper Unicode. English → as-is.
-3. Preserve question numbers EXACTLY: Q.1, Q.2, प्र.१, प्र.२, 1., 2., (अ), (ब), i), ii) etc.
-4. Preserve marks EXACTLY: [2], (3 गुण), (Marks: 5), 5M etc.
-5. Keep sub-questions indented under their parent.
-6. If a word is illegible, write [?].
-7. Output ONLY the extracted text. Zero markdown (no **, ##, --). No explanations.`;
+CRITICAL RULES — follow exactly:
+1. Extract ALL text EXACTLY as written. Do not skip anything.
+2. Devanagari (मराठी/हिंदी/संस्कृत) → proper Unicode Devanagari. English → as-is.
+3. QUESTION NUMBERS are the most important part. Each main question MUST start on its own line beginning with the question number. Formats seen in Indian papers:
+   - Q.1  Q.2  Q.3  (English style)
+   - प्र.१  प्र.२  प्र.३  (Marathi style)
+   - 1.  2.  3.  (just number + dot + space)
+   - Q 1  Q 2  (space between Q and number)
+   Always write question numbers at the START of a new line, exactly as printed.
+4. Sub-questions like (a)(b)(c) or (अ)(ब)(क) or i)ii)iii) come on their own lines, indented with 2 spaces.
+5. Marks like [2], (3 गुण), (5M) → keep exactly as printed.
+6. Illegible word → write [?]
+7. Output ONLY the raw extracted text. Absolutely no markdown (no **, no ##, no --, no backticks). No commentary.`;
   } else {
     prompt = `Examine this Indian school question paper image carefully.
 Extract ONLY the header/top section info. Return ONLY this JSON, nothing else:
