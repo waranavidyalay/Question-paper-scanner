@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>प्रश्नपत्रिका स्कॅनर — शाळा</title>
+<title>प्रश्नपत्रिका स्कॅनर</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Tiro+Devanagari+Marathi&family=DM+Sans:wght@300;400;500;700&display=swap');
 :root{
@@ -16,7 +16,6 @@ body{font-family:'DM Sans',sans-serif;background:var(--paper);color:var(--ink);m
 body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
   background-image:repeating-linear-gradient(transparent,transparent 31px,#ddd8ce 31px,#ddd8ce 32px);opacity:.28}
 .wrap{max-width:900px;margin:0 auto;padding:0 20px 60px;position:relative;z-index:1}
-
 header{padding:32px 0 24px;border-bottom:3px double var(--ruled);margin-bottom:26px}
 .hrow{display:flex;align-items:flex-start;gap:14px}
 .stamp{width:56px;height:56px;background:var(--red);border-radius:50%;flex-shrink:0;
@@ -26,14 +25,26 @@ header{padding:32px 0 24px;border-bottom:3px double var(--ruled);margin-bottom:2
 .htxt h1{font-family:'Tiro Devanagari Marathi',serif;font-size:25px;font-weight:400;line-height:1.2}
 .htxt h1 span{color:var(--red)}
 .htxt p{font-size:13px;color:#666;margin-top:4px;font-weight:300}
-.badge{display:inline-flex;align-items:center;gap:4px;margin-top:6px;
-  background:#e8f8ef;color:var(--green);border:1px solid #a8e6c0;
-  border-radius:20px;padding:3px 10px;font-size:11px;font-weight:600}
-.sec-badge{background:#e8f0fe;color:#1a56db;border-color:#a9c0f5}
+.badges{display:flex;flex-wrap:wrap;gap:6px;margin-top:7px}
+.bdg{display:inline-flex;align-items:center;gap:4px;border-radius:20px;padding:3px 10px;font-size:11px;font-weight:600;border:1px solid}
+.bdg-g{background:#e8f8ef;color:var(--green);border-color:#a8e6c0}
+.bdg-b{background:#e8f0fe;color:#1a56db;border-color:#a9c0f5}
+.bdg-p{background:#f3f0ff;color:#6741d9;border-color:#c5b8fa}
+
+/* ENV ERROR BANNER */
+.env-error{background:#fef2f2;border:2px solid #fca5a5;border-radius:var(--r);padding:18px 20px;margin-bottom:20px;display:none}
+.env-error.on{display:block}
+.env-error h3{font-size:15px;font-weight:700;color:#dc2626;margin-bottom:10px}
+.env-error ol{margin-left:20px;font-size:13px;color:#7f1d1d;line-height:2}
+.env-error code{background:#fee2e2;padding:2px 7px;border-radius:4px;font-family:monospace;font-size:12px;color:#dc2626}
 
 .card{background:white;border:1px solid var(--ruled);border-radius:var(--r);padding:20px;margin-bottom:20px;box-shadow:var(--sh)}
 .card-ttl{font-size:12px;font-weight:700;color:var(--red);text-transform:uppercase;letter-spacing:.08em;margin-bottom:12px;display:flex;align-items:center;gap:8px}
 .card-ttl::after{content:'';flex:1;height:1px;background:var(--ruled)}
+.alert{padding:11px 15px;border-radius:8px;font-size:13px;margin:8px 0}
+.al-err{background:#fef2f2;border:1px solid #fca5a5;color:#dc2626}
+.al-ok{background:#f0fdf4;border:1px solid #86efac;color:#16a34a}
+.al-info{background:#eff6ff;border:1px solid #93c5fd;color:#1d4ed8}
 
 .zone{border:2.5px dashed var(--ruled);border-radius:var(--r);padding:38px 20px;text-align:center;cursor:pointer;transition:all .2s;background:var(--paper);position:relative}
 .zone:hover,.zone.on{border-color:var(--red);background:#fff8f8}
@@ -43,12 +54,11 @@ header{padding:32px 0 24px;border-bottom:3px double var(--ruled);margin-bottom:2
 .zone p{font-size:13px;color:#888}
 .fmts{margin-top:8px;display:flex;justify-content:center;gap:5px;flex-wrap:wrap}
 .fmt{background:var(--paper2);border:1px solid var(--ruled);border-radius:4px;padding:2px 8px;font-size:11px;color:#666;font-weight:600}
-
 .pg-area{display:none}
 .pg-bar{display:flex;align-items:center;justify-content:space-between;padding:9px 0 4px}
 .pg-bar span{font-size:13px;color:#666}
 .pg-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:9px;margin-top:4px}
-.pg{position:relative;border-radius:8px;overflow:hidden;border:2px solid var(--ruled);background:#f5f5f5;aspect-ratio:3/4;cursor:grab}
+.pg{position:relative;border-radius:8px;overflow:hidden;border:2px solid var(--ruled);background:#f5f5f5;aspect-ratio:3/4;cursor:grab;transition:border-color .2s,transform .2s}
 .pg:hover{border-color:var(--blue);transform:translateY(-2px)}
 .pg img{width:100%;height:100%;object-fit:cover;display:block;pointer-events:none}
 .pg .lbl{position:absolute;bottom:0;left:0;right:0;background:rgba(26,26,46,.78);color:white;font-size:11px;text-align:center;padding:3px;font-weight:600}
@@ -57,11 +67,9 @@ header{padding:32px 0 24px;border-bottom:3px double var(--ruled);margin-bottom:2
 .pg:hover .rm{opacity:1}
 .pg.drag{opacity:.4;transform:scale(.95)}
 .pg.drop-t{border-color:var(--blue);background:#e8f4fd}
-
 .proc-btn{width:100%;padding:15px;background:var(--red);color:white;border:none;border-radius:var(--r);font-size:16px;font-weight:700;font-family:'Tiro Devanagari Marathi',serif;cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:9px;margin:16px 0;box-shadow:0 6px 20px rgba(192,57,43,.28)}
-.proc-btn:hover:not(:disabled){background:var(--red2);transform:translateY(-1px);box-shadow:0 8px 28px rgba(192,57,43,.38)}
+.proc-btn:hover:not(:disabled){background:var(--red2);transform:translateY(-1px)}
 .proc-btn:disabled{background:#ccc;cursor:not-allowed;box-shadow:none;transform:none}
-
 .prog{display:none;margin:12px 0}.prog.on{display:block}
 .prog-track{background:var(--paper2);border-radius:100px;height:8px;overflow:hidden;margin:7px 0}
 .prog-fill{height:100%;background:linear-gradient(90deg,var(--red),var(--gold));border-radius:100px;width:0%;transition:width .35s ease}
@@ -71,21 +79,18 @@ header{padding:32px 0 24px;border-bottom:3px double var(--ruled);margin-bottom:2
 .pill.act{background:#fff3e0;border-color:var(--gold);color:#b36b00}
 .pill.ok{background:#e8f8ef;border-color:#a8e6c0;color:var(--green)}
 .pill.err{background:#fef2f2;border-color:#fca5a5;color:#dc2626}
-
-.meta-panel{display:none;background:#f0f8ff;border:1.5px solid #93c5fd;border-radius:10px;padding:15px 17px;margin-bottom:17px}
+.meta-panel{display:none;background:#f8f6ff;border:1.5px solid #c5b8fa;border-radius:10px;padding:15px 17px;margin-bottom:17px}
 .meta-panel.on{display:block}
-.meta-panel h4{font-size:12px;font-weight:700;color:var(--blue);margin-bottom:9px;text-transform:uppercase;letter-spacing:.06em}
+.meta-panel h4{font-size:12px;font-weight:700;color:#6741d9;margin-bottom:9px;text-transform:uppercase;letter-spacing:.06em}
 .meta-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:7px}
 .mf label{display:block;font-size:10px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.06em;margin-bottom:3px}
-.mf input{width:100%;padding:7px 10px;border:1.5px solid #bfdbfe;border-radius:6px;font-size:13px;font-family:'DM Sans',sans-serif;color:var(--ink);background:white;outline:none}
-.mf input:focus{border-color:var(--blue)}
+.mf input{width:100%;padding:7px 10px;border:1.5px solid #c5b8fa;border-radius:6px;font-size:13px;font-family:'DM Sans',sans-serif;color:var(--ink);background:white;outline:none}
+.mf input:focus{border-color:#6741d9}
 .meta-note{font-size:11px;color:#64748b;margin-top:6px}
-
 .result{display:none}.result.on{display:block}
 .rtop{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px}
 .rtop h2{font-family:'Tiro Devanagari Marathi',serif;font-size:18px;font-weight:400}
 .ract{display:flex;gap:7px;flex-wrap:wrap}
-
 .btn{padding:8px 16px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;border:1.5px solid transparent;transition:all .2s;display:inline-flex;align-items:center;gap:5px;font-family:'DM Sans',sans-serif}
 .b-green{background:var(--green);color:white;border-color:var(--green);box-shadow:0 4px 12px rgba(39,174,96,.22)}
 .b-green:hover:not(:disabled){background:#219a52}
@@ -94,20 +99,12 @@ header{padding:32px 0 24px;border-bottom:3px double var(--ruled);margin-bottom:2
 .b-blue:hover{background:#2471a3}
 .b-out{background:white;color:var(--ink);border-color:var(--ruled)}
 .b-out:hover{border-color:var(--red);color:var(--red)}
-
+.b-sm{padding:5px 11px;font-size:12px}
 .preview{background:white;border:1px solid var(--ruled);border-radius:var(--r);padding:20px;max-height:520px;overflow-y:auto;font-family:'Tiro Devanagari Marathi',serif;font-size:15px;line-height:2;color:var(--ink);white-space:pre-wrap;box-shadow:inset 0 2px 8px rgba(0,0,0,.04)}
 .preview:focus{outline:2px solid var(--red)}
 .preview::-webkit-scrollbar{width:5px}
 .preview::-webkit-scrollbar-thumb{background:var(--ruled);border-radius:3px}
-
-.alert{padding:11px 15px;border-radius:8px;font-size:13px;margin:8px 0}
-.al-err{background:#fef2f2;border:1px solid #fca5a5;color:#dc2626}
-.al-ok{background:#f0fdf4;border:1px solid #86efac;color:#16a34a}
-.al-info{background:#eff6ff;border:1px solid #93c5fd;color:#1d4ed8}
-
 @keyframes spin{to{transform:rotate(360deg)}}
-.spin{width:17px;height:17px;border:2.5px solid rgba(255,255,255,.3);border-top-color:white;border-radius:50%;animation:spin .7s linear infinite;flex-shrink:0}
-
 footer{text-align:center;padding:24px 0 12px;font-size:12px;color:#aaa;border-top:1px solid var(--ruled);margin-top:36px}
 @media(max-width:600px){.htxt h1{font-size:21px}.proc-btn{font-size:14px;padding:13px}.meta-grid{grid-template-columns:1fr 1fr}}
 </style>
@@ -122,29 +119,48 @@ footer{text-align:center;padding:24px 0 12px;font-size:12px;color:#aaa;border-to
     </div>
     <div class="htxt">
       <h1>प्रश्नपत्रिका <span>स्कॅनर</span></h1>
-      <p>हस्तलिखित प्रश्नपत्रिका → Word Document | Google Gemini AI</p>
-      <div class="badge">✓ मोफत • माहिती AI आपोआप ओळखतो</div>
-      <div class="badge sec-badge" style="margin-left:6px">🔒 API Key सुरक्षित — Server वर</div>
+      <p>हस्तलिखित प्रश्नपत्रिका → Word Document | Claude / Gemini AI</p>
+      <div class="badges">
+        <div class="bdg bdg-g">✓ AI माहिती आपोआप ओळखतो</div>
+        <div class="bdg bdg-b">100 teachers ready</div>
+        <div class="bdg bdg-p">🔒 Key server वर सुरक्षित</div>
+      </div>
     </div>
   </div>
 </header>
 
+<!-- ENV ERROR BANNER — shows when API key not set -->
+<div class="env-error" id="envError">
+  <h3>⚠️ Server Configuration Error — API Key सेट नाही!</h3>
+  <ol>
+    <li><strong>Vercel Dashboard</strong> उघडा → तुमचा project निवडा</li>
+    <li><strong>Settings → Environment Variables</strong> वर जा</li>
+    <li>नवीन variable add करा:<br>
+      <code>CLAUDE_API_KEY</code> = <code>sk-ant-api03-...</code> (Anthropic key)<br>
+      <em>किंवा</em> <code>GEMINI_API_KEY</code> = <code>AIzaSy...</code> (Google key)
+    </li>
+    <li>Save करा → <strong>Deployments → Redeploy</strong> करा</li>
+    <li>Page refresh करा</li>
+  </ol>
+</div>
+
 <div class="card">
   <div class="card-ttl">📷 प्रश्नपत्रिकेचे फोटो Upload करा</div>
   <div class="alert al-info" style="margin-bottom:12px;font-size:12px">
-    💡 <strong>फॉर्म भरायची गरज नाही!</strong> AI आपोआप ओळखेल: शाळेचे नाव · विषय · इयत्ता · परीक्षा प्रकार · तारीख · गुण · वेळ
+    💡 <strong>फॉर्म भरायची गरज नाही!</strong> AI आपोआप ओळखेल: शाळेचे नाव · विषय · इयत्ता · परीक्षा प्रकार · तारीख · गुण · वेळ<br>
+    <strong>📋 Smart merge:</strong> सर्व pages scan झाल्यावर प्रश्न क्रमांकानुसार automatically arrange होतात.
   </div>
   <div class="zone" id="zone">
-    <input type="file" id="fi" accept="image/jpeg,image/jpg,image/png,image/webp,image/heic,image/heif" multiple>
+    <input type="file" id="fi" accept="image/jpeg,image/jpg,image/png,image/webp" multiple>
     <div class="zi">📄</div>
     <h3>फोटो इथे टाका किंवा क्लिक करा</h3>
     <p>सर्व pages एकत्र निवडा — drag करून क्रम बदलता येतो (max 30)</p>
-    <div class="fmts"><span class="fmt">JPG</span><span class="fmt">PNG</span><span class="fmt">WEBP</span><span class="fmt">HEIC</span></div>
+    <div class="fmts"><span class="fmt">JPG</span><span class="fmt">PNG</span><span class="fmt">WEBP</span></div>
   </div>
   <div class="pg-area" id="pgArea">
     <div class="pg-bar">
       <span>एकूण <strong id="pgCnt">0</strong> pages</span>
-      <button class="btn b-out" style="font-size:12px;padding:5px 11px" onclick="clearAll()">🗑 सर्व काढा</button>
+      <button class="btn b-out b-sm" onclick="clearAll()">🗑 सर्व काढा</button>
     </div>
     <div class="pg-grid" id="pgGrid"></div>
   </div>
@@ -172,7 +188,7 @@ footer{text-align:center;padding:24px 0 12px;font-size:12px;color:#aaa;border-to
     <div class="mf"><label>एकूण गुण</label><input id="m_marks" placeholder="—"></div>
     <div class="mf"><label>वेळ</label><input id="m_time" placeholder="—"></div>
   </div>
-  <p class="meta-note">⚡ Word file च्या header मध्ये जाते. चुकीचे असल्यास edit करा.</p>
+  <p class="meta-note">⚡ Word file header मध्ये जाते. चुकीचे असल्यास edit करा.</p>
 </div>
 
 <div class="result" id="result">
@@ -191,38 +207,22 @@ footer{text-align:center;padding:24px 0 12px;font-size:12px;color:#aaa;border-to
 </div>
 
 </div>
-<footer>प्रश्नपत्रिका स्कॅनर • Secure Backend • API key server वर सुरक्षित आहे</footer>
+<footer>प्रश्नपत्रिका स्कॅनर • Claude / Gemini AI • API key server वर सुरक्षित</footer>
 
 <script>
-// Load docx with dual-CDN fallback
 (function(){
   const s=document.createElement('script');
   s.src='https://unpkg.com/docx@8.5.0/build/index.umd.js';
-  s.onerror=()=>{
-    const s2=document.createElement('script');
-    s2.src='https://cdn.jsdelivr.net/npm/docx@8.5.0/build/index.umd.js';
-    document.head.appendChild(s2);
-  };
+  s.onerror=()=>{const s2=document.createElement('script');s2.src='https://cdn.jsdelivr.net/npm/docx@8.5.0/build/index.umd.js';document.head.appendChild(s2);};
   document.head.appendChild(s);
 })();
 </script>
 <script>
 'use strict';
-// ═══════════════════════════════════
-// CONFIG — deploy केल्यावर हे बदला
-// ═══════════════════════════════════
-// Local testing साठी: 'http://localhost:3000/api/scan'
-// Vercel deploy नंतर: '/api/scan'   (same domain असल्यामुळे)
 const API_URL = '/api/scan';
-
-// ═══════════════════════════════════
-// STATE
-// ═══════════════════════════════════
 let pages=[], texts=[];
 
-// ═══════════════════════════════════
-// INIT
-// ═══════════════════════════════════
+// ── Init ─────────────────────────────────────────
 addEventListener('DOMContentLoaded',()=>{
   const z=document.getElementById('zone');
   z.addEventListener('dragover',e=>{e.preventDefault();z.classList.add('on');});
@@ -231,25 +231,39 @@ addEventListener('DOMContentLoaded',()=>{
   document.getElementById('fi').addEventListener('change',e=>{addFiles([...e.target.files]);e.target.value='';});
 });
 
-// ═══════════════════════════════════
-// FILES
-// ═══════════════════════════════════
+// ── Files ────────────────────────────────────────
 async function addFiles(files){
-  const imgs=files.filter(f=>/\.(jpe?g|png|webp|heic|heif)$/i.test(f.name)||f.type.startsWith('image/'));
-  if(!imgs.length){showAlert('⚠ फक्त image files (JPG, PNG, WEBP, HEIC)','err');return;}
+  const imgs=files.filter(f=>/\.(jpe?g|png|webp)$/i.test(f.name)||f.type.startsWith('image/'));
+  if(!imgs.length){showAlert('⚠ फक्त JPG, PNG, WEBP','err');return;}
   const room=30-pages.length;
-  if(room<=0){showAlert('⚠ 30 pages ची limit!','err');return;}
+  if(room<=0){showAlert('⚠ 30 pages limit!','err');return;}
   const add=imgs.slice(0,room);
-  if(imgs.length>room) showAlert(`⚠ फक्त ${room} pages add केले (limit 30)`,'err');
-  for(const f of add){const d=await readF(f);pages.push({d,name:f.name});}
+  if(imgs.length>room) showAlert(`⚠ फक्त ${room} pages add केले`,'err');
+  for(const f of add){
+    const d=f.size>2*1024*1024 ? await compress(f) : await readF(f);
+    pages.push({d,name:f.name});
+  }
   renderPages(); updateBtn(); clearAlert();
 }
 function readF(f){return new Promise((r,j)=>{const x=new FileReader();x.onload=e=>r(e.target.result);x.onerror=j;x.readAsDataURL(f);});}
-function clearAll(){if(!confirm('सर्व pages काढायचे?'))return;pages=[];renderPages();updateBtn();hide('metaPanel');hide('result');}
+function compress(file){
+  return new Promise(res=>{
+    const img=new Image(), url=URL.createObjectURL(file);
+    img.onload=()=>{
+      const MAX=1600;
+      let w=img.width,h=img.height;
+      if(w>MAX||h>MAX){const s=MAX/Math.max(w,h);w=Math.round(w*s);h=Math.round(h*s);}
+      const c=document.createElement('canvas');c.width=w;c.height=h;
+      c.getContext('2d').drawImage(img,0,0,w,h);
+      URL.revokeObjectURL(url);
+      res(c.toDataURL('image/jpeg',0.78));
+    };
+    img.src=url;
+  });
+}
+function clearAll(){if(!confirm('सर्व pages काढायचे?'))return;pages=[];renderPages();updateBtn();hide('metaPanel');hide('result');hide('envError');}
 
-// ═══════════════════════════════════
-// RENDER PAGES
-// ═══════════════════════════════════
+// ── Render pages ─────────────────────────────────
 function renderPages(){
   const g=document.getElementById('pgGrid');
   document.getElementById('pgCnt').textContent=pages.length;
@@ -274,9 +288,7 @@ function renderPages(){
 function rmPg(i,e){e.stopPropagation();pages.splice(i,1);renderPages();updateBtn();}
 function setPst(i,ic){const e=document.getElementById('ps'+i);if(e)e.textContent=ic;}
 
-// ═══════════════════════════════════
-// UI HELPERS
-// ═══════════════════════════════════
+// ── UI ────────────────────────────────────────────
 function updateBtn(){
   const b=document.getElementById('procBtn'),t=document.getElementById('procTxt');
   if(!pages.length){b.disabled=true;t.textContent='📄 pages upload करा';return;}
@@ -295,40 +307,33 @@ function show(id){document.getElementById(id).classList.add('on');}
 function hide(id){document.getElementById(id).classList.remove('on');}
 function sleep(ms){return new Promise(r=>setTimeout(r,ms));}
 
-// ═══════════════════════════════════
-// API CALL — backend ला request
-// ═══════════════════════════════════
-async function callAPI(body, retries=2){
-  for(let attempt=0; attempt<=retries; attempt++){
+// ── API call ──────────────────────────────────────
+async function callAPI(body,retries=2){
+  for(let a=0;a<=retries;a++){
     try{
-      const res = await fetch(API_URL, {
-        method:'POST',
-        headers:{'Content-Type':'application/json'},
-        body:JSON.stringify(body)
-      });
-      if(res.ok) return await res.json();
-
-      const err = await res.json().catch(()=>({error:res.statusText}));
-      if(res.status===429){
-        const wait=(attempt+1)*20;
-        setP(-1,`⏳ Rate limit — ${wait} sec थांबतो...`);
-        await sleep(wait*1000); continue;
+      const res=await fetch(API_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+      const json=await res.json();
+      if(res.ok) return json;
+      // Check for missing env var
+      if(json.fix==='vercel_env_missing'){
+        show('envError');
+        throw new Error(json.error);
       }
-      throw new Error(err.error||'Server error');
+      if(res.status===429){const w=(a+1)*25;setP(-1,`⏳ ${w}s थांबतो...`);await sleep(w*1000);continue;}
+      throw new Error(json.error||'Server error');
     }catch(e){
-      if(attempt===retries) throw e;
+      if(e.message.includes('थांबतो')||e.message.includes('env_missing')||e.message.includes('सेट नाही')) throw e;
+      if(a===retries) throw e;
       await sleep(3000);
     }
   }
 }
 
-// ═══════════════════════════════════
-// MAIN SCAN
-// ═══════════════════════════════════
+// ── Main scan ─────────────────────────────────────
 async function go(){
   if(!pages.length){showAlert('⚠ Pages upload करा!','err');return;}
   document.getElementById('procBtn').disabled=true;
-  show('prog'); hide('result'); hide('metaPanel');
+  show('prog'); hide('result'); hide('metaPanel'); hide('envError');
   document.getElementById('steps').innerHTML='';
   clearAlert(); texts=[];
 
@@ -336,22 +341,19 @@ async function go(){
     pill('OCR','act');
     for(let i=0;i<pages.length;i++){
       const n=i+1;
-      setP(Math.round(5+(i/pages.length)*72),`Page ${n} / ${pages.length} scan होत आहे...`);
+      setP(Math.round(5+(i/pages.length)*72),`Page ${n}/${pages.length} scan होत आहे...`);
       pill(`Pg ${n}`,'act'); setPst(i,'⏳');
-
-      const dataUrl=pages[i].d;
-      const b64=dataUrl.split(',')[1];
-      const mime=dataUrl.split(';')[0].split(':')[1]||'image/jpeg';
-
+      const b64=pages[i].d.split(',')[1];
+      const mime=pages[i].d.split(';')[0].split(':')[1]||'image/jpeg';
       try{
         const res=await callAPI({imageBase64:b64,mimeType:mime,pageNum:n,totalPages:pages.length,taskType:'ocr'});
         texts.push(res.text||'');
         pill(`Pg ${n}`,'ok'); setPst(i,'✅');
       }catch(e){
-        texts.push(`[Page ${n} — scan अयशस्वी: ${e.message}]`);
+        texts.push('');
         pill(`Pg ${n}`,'err'); setPst(i,'❌');
+        if(/API Key|permission|401|सेट नाही/i.test(e.message)) throw e;
       }
-
       if(i<pages.length-1) await sleep(1500);
     }
     pill('OCR','ok');
@@ -361,8 +363,13 @@ async function go(){
     await extractMeta();
     pill('माहिती','ok');
 
+    setP(93,'प्रश्न क्रमाने arrange करत आहे...');
+    pill('Arrange','act');
+    const merged = smartMerge(texts);
+    pill('Arrange','ok');
+
     setP(100,'✅ पूर्ण झाले!');
-    document.getElementById('preview').textContent=buildBody();
+    document.getElementById('preview').textContent = merged;
     show('result'); show('metaPanel');
     document.getElementById('metaPanel').scrollIntoView({behavior:'smooth',block:'start'});
 
@@ -374,38 +381,119 @@ async function go(){
   }
 }
 
-// ═══════════════════════════════════
-// META EXTRACTION
-// ═══════════════════════════════════
+// ── SMART MERGE — question-number aware ──────────
+// सर्व pages चा text एकत्र करतो, duplicate question numbers काढतो,
+// आणि Q.1, Q.2... / प्र.१, प्र.२... / 1., 2. नुसार sort करतो
+function smartMerge(pageTexts) {
+  // Step 1: Combine all text
+  const allText = pageTexts.join('\n\n');
+
+  // Step 2: Split into question blocks
+  // Pattern: lines starting with question numbers
+  const Q_PATTERN = /^(?:Q\.?\s*(\d+)|q\.?\s*(\d+)|प्र\.?\s*([१२३४५६७८९०\d]+)|प्रश्न\s*([१२३४५६७८९०\d]+)|(\d+)\s*[.)]\s+\S)/mu;
+
+  const lines = allText.split('\n');
+  const blocks = []; // [{qNum: number|null, text: string}]
+  let currentBlock = {qNum: null, lines: []};
+
+  for (const line of lines) {
+    const trimmed = line.trim();
+    if (!trimmed) { currentBlock.lines.push(''); continue; }
+
+    const qNum = extractQNum(trimmed);
+    if (qNum !== null && qNum > 0) {
+      // Save previous block
+      if (currentBlock.lines.some(l => l.trim())) {
+        blocks.push({ qNum: currentBlock.qNum, text: currentBlock.lines.join('\n').trim() });
+      }
+      currentBlock = { qNum, lines: [trimmed] };
+    } else {
+      currentBlock.lines.push(trimmed);
+    }
+  }
+  // Save last block
+  if (currentBlock.lines.some(l => l.trim())) {
+    blocks.push({ qNum: currentBlock.qNum, text: currentBlock.lines.join('\n').trim() });
+  }
+
+  // Step 3: Separate header (blocks before first numbered question) from body
+  let headerIdx = blocks.findIndex(b => b.qNum !== null);
+  const headerBlocks = headerIdx > 0 ? blocks.slice(0, headerIdx) : [];
+  const qBlocks = headerIdx >= 0 ? blocks.slice(headerIdx) : blocks;
+
+  // Step 4: Deduplicate — if same question number appears from multiple pages, keep the longer one
+  const qMap = new Map(); // qNum → block
+  for (const b of qBlocks) {
+    if (b.qNum === null) {
+      // Floating text — attach to previous question or keep as-is
+      const key = 'float_' + qMap.size;
+      qMap.set(key, b);
+      continue;
+    }
+    const existing = qMap.get(b.qNum);
+    if (!existing || b.text.length > existing.text.length) {
+      qMap.set(b.qNum, b);
+    }
+  }
+
+  // Step 5: Sort by question number
+  const sorted = [...qMap.entries()]
+    .sort((a, b) => {
+      const na = typeof a[0] === 'number' ? a[0] : 9999;
+      const nb = typeof b[0] === 'number' ? b[0] : 9999;
+      return na - nb;
+    })
+    .map(([,block]) => block.text);
+
+  // Step 6: Build final output
+  const headerText = headerBlocks.map(b => b.text).join('\n\n');
+  const bodyText = sorted.join('\n\n');
+
+  return [headerText, bodyText].filter(Boolean).join('\n\n');
+}
+
+// Extract question number from a line
+function extractQNum(line) {
+  const devanagariToDigit = s => s.replace(/[१२३४५६७८९०]/g, d => '१२३४५६७८९०'.indexOf(d)+1+'').replace(/०/g,'0');
+
+  // Q.1 or Q1
+  let m = line.match(/^[Qq]\.?\s*(\d+)/);
+  if (m) return parseInt(m[1]);
+
+  // प्र.१ or प्र १
+  m = line.match(/^(?:प्र\.?\s*|प्रश्न\s*)([१२३४५६७८९०\d]+)/u);
+  if (m) return parseInt(devanagariToDigit(m[1]));
+
+  // 1. or 1) followed by space and text
+  m = line.match(/^(\d+)\s*[.)]\s+\S/);
+  if (m) { const n=parseInt(m[1]); if(n>=1&&n<=50) return n; }
+
+  // (अ) (ब) style — return null (sub-questions)
+  return null;
+}
+
+// ── Meta extraction ───────────────────────────────
 async function extractMeta(){
   if(!pages.length) return;
-  const dataUrl=pages[0].d;
-  const b64=dataUrl.split(',')[1];
-  const mime=dataUrl.split(';')[0].split(':')[1]||'image/jpeg';
+  const b64=pages[0].d.split(',')[1];
+  const mime=pages[0].d.split(';')[0].split(':')[1]||'image/jpeg';
   try{
     const res=await callAPI({imageBase64:b64,mimeType:mime,taskType:'meta'});
     const match=(res.text||'').match(/\{[\s\S]*?\}/);
     if(!match) return;
     const m=JSON.parse(match[0]);
     const set=(id,v)=>{const e=document.getElementById(id);if(e)e.value=v||'';};
-    set('m_school',m.school); set('m_subj',m.subject); set('m_cls',m.class);
-    set('m_exam',m.examType); set('m_date',m.date); set('m_marks',m.marks); set('m_time',m.time);
-  }catch(e){console.warn('Meta fail:',e);}
+    set('m_school',m.school);set('m_subj',m.subject);set('m_cls',m.class);
+    set('m_exam',m.examType);set('m_date',m.date);set('m_marks',m.marks);set('m_time',m.time);
+  }catch(e){console.warn('Meta:',e);}
 }
 
-function buildBody(){
-  return texts.map((t,i)=>
-    (texts.length>1?(i>0?'\n\n':'')+`━━━ Page ${i+1} ━━━\n\n`:'')+t
-  ).join('\n').trim();
-}
 function getMeta(){
   const g=id=>document.getElementById(id).value.trim();
   return{school:g('m_school'),subj:g('m_subj'),cls:g('m_cls'),exam:g('m_exam'),date:g('m_date'),marks:g('m_marks'),time:g('m_time')};
 }
 
-// ═══════════════════════════════════
-// COPY
-// ═══════════════════════════════════
+// ── Copy ──────────────────────────────────────────
 function copyTxt(){
   const m=getMeta();
   const hdr=[m.school,[m.subj,m.cls].filter(Boolean).join(' | '),m.exam,
@@ -413,24 +501,19 @@ function copyTxt(){
   ].filter(Boolean).join('\n');
   const body=document.getElementById('preview').innerText;
   const full=hdr?hdr+'\n'+'─'.repeat(50)+'\n\n'+body:body;
-  navigator.clipboard.writeText(full)
-    .then(()=>{showAlert('✅ Text copy झाला!','ok');setTimeout(clearAlert,3000);})
-    .catch(()=>showAlert('Copy failed','err'));
+  navigator.clipboard.writeText(full).then(()=>{showAlert('✅ Copy झाला!','ok');setTimeout(clearAlert,3000);}).catch(()=>showAlert('Copy failed','err'));
 }
 
-// ═══════════════════════════════════
-// DOWNLOAD DOCX
-// ═══════════════════════════════════
+// ── Download DOCX ─────────────────────────────────
 async function dlDocx(){
   const btn=document.getElementById('dlBtn');
   btn.disabled=true; btn.textContent='⏳ तयार होत आहे...';
   try{
     const lib=await waitDocx(10000);
     if(!lib) throw new Error('docx library load झाली नाही — page refresh करा.');
-
     const {Document,Packer,Paragraph,TextRun,AlignmentType,BorderStyle}=lib;
     const m=getMeta();
-    const bodyTxt=document.getElementById('preview').innerText||buildBody();
+    const bodyTxt=document.getElementById('preview').innerText;
 
     const P=(text,{bold=false,size=22,center=false,color,sb=0,sa=70}={})=>
       new Paragraph({
@@ -451,8 +534,7 @@ async function dlDocx(){
     for(const line of bodyTxt.split('\n')){
       const t=line.trim();
       if(!t){kids.push(new Paragraph({spacing:{after:80}}));continue;}
-      if(/^━+\s*Page\s*\d+/.test(t)){kids.push(P(t,{size:20,color:'888888',sb:220,sa:100}));continue;}
-      const isQ=/^(Q\.?\s*\d|q\.?\s*\d|प्र\.?\s*[१२३४५६७८९०\d]|प्रश्न\s*[१२३४५६७८९०\d]|\d+\s*[.)]\s+\S)/u.test(t);
+      const isQ=extractQNumStr(t)!==null;
       kids.push(new Paragraph({
         children:[new TextRun({text:t,bold:isQ,size:isQ?24:22,font:'Noto Sans Devanagari'})],
         spacing:{after:isQ?160:60},indent:isQ?{}:{left:440},
@@ -468,10 +550,17 @@ async function dlDocx(){
     showAlert('✅ Word file download सुरू झाली!','ok');
     setTimeout(clearAlert,4000);
   }catch(e){
-    showAlert(`❌ Download error: ${e.message}`,'err');
+    showAlert(`❌ ${e.message}`,'err');
   }finally{
     btn.disabled=false; btn.innerHTML='⬇ Word (.docx) डाउनलोड';
   }
+}
+
+function extractQNumStr(line){
+  if(/^[Qq]\.?\s*\d+/.test(line)) return true;
+  if(/^(?:प्र\.?\s*|प्रश्न\s*)[१२३४५६७८९०\d]+/u.test(line)) return true;
+  if(/^\d+\s*[.)]\s+\S/.test(line)){ const n=parseInt(line);return n>=1&&n<=50; }
+  return null;
 }
 
 function dlBlob(blob,name){
@@ -492,12 +581,10 @@ function waitDocx(ms){
   });
 }
 
-// ═══════════════════════════════════
-// RESET
-// ═══════════════════════════════════
+// ── Reset ─────────────────────────────────────────
 function resetAll(){
   pages=[];texts=[];renderPages();updateBtn();
-  hide('prog');hide('result');hide('metaPanel');
+  hide('prog');hide('result');hide('metaPanel');hide('envError');
   document.getElementById('steps').innerHTML='';
   document.getElementById('pf').style.width='0%';
   clearAlert();scrollTo({top:0,behavior:'smooth'});
